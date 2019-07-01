@@ -3,8 +3,8 @@ unit Ftable;
 {-------------------------------------------------------------------}
 {                    Unit:    Ftable.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays a tabular listing of selected      }
@@ -60,6 +60,7 @@ type
     procedure Grid1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure ListBox1Exit(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     NumCols      : Integer;       //Number of columns in table
@@ -133,6 +134,14 @@ begin
 // Create list to hold indexes of row items (for sorting purposes)
   IndexList := TList.Create;
   TableOptions.TableType := NONE;
+end;
+
+
+procedure TTableForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Key = VK_F1)
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 263);
 end;
 
 

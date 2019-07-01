@@ -2,12 +2,9 @@ unit Fproped;
 
 {-------------------------------------------------------------------}
 {                    Unit:    Fproped.pas                           }
-{                    Project: EPA SWMM                              }
-{                    Version: 5.1                                   }
-{                    Date:    12/2/13    (5.1.000)                  }
-{                             8/27/14    (5.1.007)                  }
-{                             3/19/15    (5.1.008)                  }
-{                             11/27/17   (5.1.013)                  }
+{                    Project: EPANET2W                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit that is a container for a TPropEdit component.        }
@@ -218,7 +215,8 @@ begin
              end;
     else     HC := 0;
   end;
-  if HC > 0 then Application.HelpCommand(HELP_CONTEXT, HC);
+  if HC > 0
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

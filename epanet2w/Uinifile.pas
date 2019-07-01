@@ -3,10 +3,8 @@ unit Uinifile;
 {-------------------------------------------------------------------}
 {                    Unit:    Uinifile.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             7/3/07                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that reads and writes data to the EPANET2W   }
@@ -100,7 +98,6 @@ begin
   GraphOptions := DefGraphOptions;
 
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -148,11 +145,6 @@ begin
   // Retrieve directory names
     fname := ReadString('Directories','DataDir',EpanetDir);
     if (SysUtils.DirectoryExists(fname)) then SetCurrentDir(fname);
-{  DEPRECATED
-    dname := ReadString('Directories','TempDir',TempDir);
-    if dname[Length(dname)] <> '\' then dname := dname + '\';
-    if (SysUtils.DirectoryExists(dname)) then TempDir := dname;
-}
 
   // Retrieve general preferences
     FontName := ReadString('Preferences','FontName','Segoe UI'); //'Tahoma'); //'MS Sans Serif');
@@ -169,12 +161,6 @@ begin
   // Retrieve Property Editor parameters
     with PropEditForm do
     begin
-{  DEPRECATED
-      Left := ReadInteger('Property Editor','Left',Left);
-      Top  := ReadInteger('Property Editor','Top',Top);
-      if Left > Screen.Width then Left := (Screen.Width - Width) div 2;
-      if Top  > Screen.Height then Top := (Screen.Height - Height) div 2;
-}
       Width := ReadInteger('Property Editor','Width',Width);
       Height := ReadInteger('Property Editor','Height',Height);
       Editor.HeaderSplit := ReadInteger('Property Editor','HeaderSplit',
@@ -198,7 +184,6 @@ var
   s       : String;
 begin
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -245,7 +230,6 @@ begin
   // Save directory names
     GetDir(0,s);
     WriteString('Directories','DataDir',s);
-{   WriteString('Directories','TempDir',TempDir);  DEPRECATED  }
 
   // Save general program preferences
     WriteBool('Preferences','BoldFonts',BoldFonts);
@@ -302,7 +286,6 @@ begin
   for i := JUNCS to CNTRLS do IDPrefix[i] := '';
 
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -354,7 +337,6 @@ var
   i: Integer;
 begin
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -395,7 +377,6 @@ var
   L,T,W,H: Integer;
   S: TWindowState;
 begin
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
     with MainForm do
@@ -424,7 +405,6 @@ var
   R: TRect;
   S: Integer;
 begin
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
     with MainForm do

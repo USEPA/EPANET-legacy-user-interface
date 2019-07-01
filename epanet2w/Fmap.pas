@@ -3,11 +3,8 @@ unit Fmap;
 {-------------------------------------------------------------------}
 {                    Unit:    Fmap.pas                              }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    6/1/00                                }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             3/1/01                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {    MDI child form that displays a map of the pipe network         }
@@ -33,9 +30,6 @@ unit Fmap;
       HintPanel - panel displaying flyover information
                   on node or link under the mouse pointer
       Timer1    - timer used to make highlighted object blink
-
-{*** Updated 3/1/01 ***}
-Widths of NodeLegendPanel & LinkLegendPanel were enlarged slightly.      
 *********************************************************************)
 
 interface
@@ -43,7 +37,6 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Spin, StdCtrls, ExtCtrls, Tabs, Buttons, Menus,
-{*** Updated 12/29/00 ***}
   Clipbrd, Math, Printers, System.Types, System.UITypes,
   Xprinter, Uglobals, Uutils, Umap;
 
@@ -279,24 +272,6 @@ var
 //================================================================
 //             Form Creation, Resizing and Destruction
 //================================================================
-{
-procedure TMapForm.CreateParams(var Params: TCreateParams);
-//-------------------------------------------------------------
-// Positions the map form on creation so that it fills the
-// MainForm's client area to left of Browser window.
-//-------------------------------------------------------------
-begin
-  Inherited CreateParams(Params);
-  with Params do
-  begin
-    X := 0;
-    Y := 0;
-    Width := MainForm.ClientWidth - BrowserForm.Width - 4;
-    Height := MainForm.ClientHeight - MainForm.ControlBar1.Height -            //
-              MainForm.StatusPanel.Height - 4;
-  end;
-end;
-}
 
 procedure TMapForm.FormCreate(Sender: TObject);
 //-------------------------------------------------
@@ -305,19 +280,10 @@ procedure TMapForm.FormCreate(Sender: TObject);
 var
   y: Integer;
 begin
-
-// When designed, the form's BorderStyle was set to
-// bsToolWindow so reset the style to bsSizeable.
-// NOTE: designing with bsSizeable caused the form's
-//       icon to not display properly at times.
-//       Maybe this is some Delphi bug related
-//       to overriding the CreateParams function.
-  //BorderStyle := bsSizeable;
-
     Left := 0;
     Top := 0;
     Width := MainForm.ClientWidth - BrowserForm.Width - 4;
-    Height := MainForm.ClientHeight - MainForm.ControlBar1.Height -            //
+    Height := MainForm.ClientHeight - MainForm.ControlBar1.Height -
               MainForm.StatusPanel.Height - 4;
 
 
@@ -376,7 +342,6 @@ begin
   TimeLegendPanel.Visible := True;
   HintPanel.Visible := False;
 
-{*** Updated 12/29/00 ***}
 //Disable replacement of '&' with '_' in flyover labels
   HintLabel.ShowAccelChar := False;  
 
@@ -559,7 +524,7 @@ begin
   EraseFenceline;
   MapBackdrop := DefMapBackdrop;
   MapDimensions := DefMapDimensions;
-  Map.Resize(ClientRect);                //Added on 4/30/18 (LR)
+  Map.Resize(ClientRect);
   Map.Rescale(MapDimensions);
   PopupBackdrop.Checked := False;
   PopupBackdrop.Enabled := False;
@@ -884,9 +849,6 @@ procedure TMapForm.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
 // OnMouseMove event handler.
 //-------------------------------------------------------
 begin
-// Invoke the flyover labeling feature
-  //if FlyOvers then GoFlyOver(X,Y);
-
 // Display real world map coordinates in Mainform's status panel
   if not (PtInRect(Map.Window.MapRect,Point(X,Y))) then Exit;
   FlyOverX := X;
@@ -996,6 +958,11 @@ begin
     if ((HiliteObject in [JUNCS..VALVES,LABELS])
     or (NumFencePts > 0))
     then BrowserForm.BtnDeleteClick(Sender)
+  end
+
+  else if (Key = VK_F1) then
+  begin
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 108);
   end
 
   else with PropEditForm do
@@ -1302,7 +1269,7 @@ procedure TMapForm.GoZoomIn(X: Integer; Y: Integer);
 var
   xOff, yOff: Extended;
   xSF, ySF  : Extended;
-  temp      : Integer;           {*** Updated 12/29/00 ***}
+  temp      : Integer;
 
 begin
 // Erase zoom rectangle from map
@@ -2785,8 +2752,6 @@ var
   MMPerPixelHorz, MMPerPixelVert: Integer;
   ClippingRgn: HRGN;
   DC: HDC;
-
-{*** Updated 12/29/00 ***}
   SFx, SFy: Single;
   R: TRect;
 
@@ -2799,12 +2764,9 @@ begin
   HeightInPixels := GetDeviceCaps(DC, VERTRES);
   MMPerPixelHorz := (WidthInMM*100) div WidthInPixels;
   MMPerPixelVert := (HeightInMM*100) div HeightInPixels;
-
-{*** Updated 12/29/00 ***}
   aMetafile.MMWidth := Map.Window.Pwidth*MMPerPixelHorz;
   aMetafile.MMHeight := Map.Window.Pheight*MMPerPixelVert;
 
-{*** Updated 12/29/00 ***}
 //Create a canvas for the metafile & a clipping region for the canvas
   aMetafileCanvas := TMetafileCanvas.Create(aMetafile,0);
   ClippingRgn := CreateRectRgn(0,0,Map.Window.Pwidth,Map.Window.Pheight);
@@ -2817,8 +2779,6 @@ begin
       SelectClipRgn(Canvas.Handle, ClippingRgn);
       if MapBackdrop.Visible then DrawBackdrop(Canvas);
       DrawNetwork;
-
-{*** Updated 12/29/00 ***}
       SFx := Map.Window.Pwidth/ClientWidth - 1.0;
       SFy := Map.Window.Pheight/ClientHeight - 1.0;
       if NodeLegendPanel.Visible then
@@ -2912,7 +2872,6 @@ begin
 end;
 
 
-{*** Updated 12/29/00 ***}
 procedure TMapForm.Print(Destination: TDestination);
 //----------------------------------------------------
 // Prints map to Destination (printer or preview form)

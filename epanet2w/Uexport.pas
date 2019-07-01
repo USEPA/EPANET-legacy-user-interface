@@ -4,7 +4,7 @@ unit Uexport;
 {                    Unit:    Uexport.pas                           }
 {                    Project: EPANET2W                              }
 {                    Version: 2.2                                   }
-{                    Date:    5/23/19                               }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that exports network data to INP file.       }
@@ -368,7 +368,7 @@ begin
     Writeln(F,'[TANKS]');
     Writeln(F,';ID              '#9'Elevation   '#9'InitLevel   '#9+
       'MinLevel    '#9'MaxLevel    '#9'Diameter    '#9'MinVol      '#9+
-        'VolCurve');
+        'VolCurve        '#9'Overflow');
     slist := Network.Lists[TANKS];
     n := slist.Count;
     if n > 0 then
@@ -377,14 +377,23 @@ begin
       begin
         with TNode(slist.Objects[i]) do
         begin
-          s := Data[TANK_MINVOL_INDEX];
-          if Length(Trim(s)) = 0 then s := '0';
-          Writeln(F,Format(' %-16s'#9'%-12s'#9'%-12s'#9'%-12s'#9'%-12s'#9+
-            '%-12s'#9'%-12s'#9'%-16s'#9';%s',
-              [slist[i],Data[TANK_ELEV_INDEX],Data[TANK_INITLVL_INDEX],
-                Data[TANK_MINLVL_INDEX],Data[TANK_MAXLVL_INDEX],
-                  Data[TANK_DIAM_INDEX], s, Data[TANK_VCURVE_INDEX],
-                    Data[COMMENT_INDEX]]));
+          s := Format(' %-16s'#9'%-12s'#9'%-12s'#9'%-12s'#9'%-12s'#9+'%-12s'#9,
+               [slist[i], Data[TANK_ELEV_INDEX], Data[TANK_INITLVL_INDEX],
+               Data[TANK_MINLVL_INDEX], Data[TANK_MAXLVL_INDEX],
+               Data[TANK_DIAM_INDEX]]);
+          if Length(Trim(Data[TANK_MINVOL_INDEX])) = 0
+          then s := s + '0           '#9
+          else s := s + Format('%-12s'#9, [Data[TANK_MINVOL_INDEX]]);
+          if SameText(Data[TANK_OVERFLOW_INDEX], 'Yes') then
+          begin
+            if Length(Trim(Data[TANK_VCURVE_INDEX])) = 0
+            then s := s + '*               '#9
+            else s := s + Format('-16s'#9, [Data[TANK_VCURVE_INDEX]]);
+            s := s + 'Yes'#9';' + Data[COMMENT_INDEX];
+          end
+          else s := s + Format('%-16s'#9';%s', [Data[TANK_VCURVE_INDEX],
+                        Data[COMMENT_INDEX]]);
+          Writeln(F, s);
         end;
       end;
     end;

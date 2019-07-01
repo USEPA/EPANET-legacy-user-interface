@@ -3,11 +3,8 @@ unit Uoutput;
 {-------------------------------------------------------------------}
 {                    Unit:    Uoutput.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             3/1/01                                }
-{                             7/3/07                                }
-{                             2/14/08   (2.00.12)                   }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that provides interface and retrieval        }
@@ -114,7 +111,7 @@ const
 // EPANET2.DLL.
   MagicNumber = 516114521; //File signature
 
-  Version     = 20012;     //Solver version number                              //(2.00.12 - LR)
+  Version     = 20012;     //Solver version number
   RECORDSIZE  = 4;         //Byte size of each record
   IDSIZE      = 32;        //Size of ID strings
 
@@ -660,8 +657,6 @@ begin
     ValStr := GetNodeValStr(CurrentNodeVar, CurrentPeriod, ObjType, ObjIndex)
               + ' ' + NodeUnits[CurrentNodeVar].Units
   else if (ObjType in [PIPES..VALVES]) and (CurrentLinkVar <> NOVIEW) then
-
-{*** Updated 3/1/01 ***}
   begin
     ValStr := GetLinkValStr(CurrentLinkVar, CurrentPeriod, ObjType, ObjIndex);
     if (ObjType in [PUMPS..VALVES]) and (CurrentLinkVar = HEADLOSS) then
@@ -669,7 +664,6 @@ begin
     else
       ValStr := ValStr + ' ' + LinkUnits[CurrentLinkVar].Units;
   end
-
   else ValStr := '';
 end;
 

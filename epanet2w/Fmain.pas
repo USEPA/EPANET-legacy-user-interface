@@ -4,7 +4,7 @@ unit Fmain;
 {                    Unit:    Fmain.pas                             }
 {                    Project: EPANET2W                              }
 {                    Version: 2.2                                   }
-{                    Date:    5/23/19                               }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi form unit containing main unit for EPANET2W.             }
@@ -27,7 +27,7 @@ uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Menus, ExtCtrls, Buttons, StdCtrls, ComCtrls,
   ExtDlgs, ImgList, System.ImageList, System.UITypes, Vcl.ToolWin,
-  Printers, HtmlHelpViewer, System.IOUtils,
+  Printers, System.IOUtils,
   PgSetup, OpenDlg, Xprinter, Uglobals, Uutils;
 
 const
@@ -1872,7 +1872,7 @@ begin
 
 // Update variable units & Browser's map page
   Uinput.UpdateAllUnits;
-  AutoLength := False;    {*** Updated 12/29/00 ***}
+  AutoLength := False;
   ShowAutoLengthStatus;
   BrowserForm.InitMapPage;
 
@@ -2427,15 +2427,15 @@ end;
 
 procedure TMainForm.MnuHelpTopicsClick(Sender: TObject);
 begin
-    Application.HelpCommand(HELP_CONTEXT, 101)
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_DISPLAY_TOC, 0);
 end;
 
 procedure TMainForm.MnuHelpUnitsClick(Sender: TObject);
 begin
   if UnitSystem = usUS then
-    Application.HelpCommand(HELP_CONTEXT, 293)
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 293)
   else
-    Application.HelpCommand(HELP_CONTEXT, 308)
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 308)
 end;
 
 procedure TMainForm.MnuHelpTutorialClick(Sender: TObject);

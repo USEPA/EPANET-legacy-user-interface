@@ -3,9 +3,8 @@ unit Ufileio;
 {-------------------------------------------------------------------}
 {                    Unit:    Ufileio.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/31/00                               }
-{                             7/3/07                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that reads network database from .NET file   }
@@ -15,7 +14,6 @@ unit Ufileio;
 interface
 
 uses Dialogs, Classes, SysUtils, Forms, Controls, Windows, Math,
-     //Printers,
      FileCtrl, System.UITypes, PgSetup, Uglobals, Uutils;
 
 const
@@ -142,7 +140,6 @@ var
   FileStream : TFileStream;
   Writer     : TWriter;
   i,j,n      : Integer;
-  errflag    : Boolean;
   slist      : TStringList;
   aNode1     : TNode;
   aNode2     : TNode;
@@ -161,7 +158,6 @@ begin
 
 // Create a writer object
   try
-    //errflag := True;
     Writer := TWriter.Create(FileStream, $ff);
 
     with Writer do
@@ -369,13 +365,10 @@ begin
         WriteInteger(Ord(PageNumbers));
       end;
       WriteBoolean(TitleAsHeader);
-
-{*** Updated 12/29/00 ***}
       WriteInteger(Orientation);
 
     // Write end-of-data marker
       WriteInteger(-1);
-      errflag := False;
 
     finally
       Writer.Free;
@@ -384,9 +377,6 @@ begin
   finally
     FileStream.Free;
   end;
-
-  if errflag = True then
-      Uutils.MsgDlg(FILE_ERR5, mtError, [mbOK]);
 end;
 
 
@@ -548,6 +538,9 @@ begin
           node.X := ReadFloat;
           node.Y := ReadFloat;
           ReadArray(Reader,node.Data);
+          //Use default value for new option not included in earlier versions
+          if (Version < VersionID2)
+          then node.Data[TANK_OVERFLOW_INDEX] := 'No';
           Network.Lists[TANKS].AddObject(id,node);
           nList.AddObject(id,node);
         end;
@@ -691,8 +684,6 @@ begin
           PageNumbers := TPageNumbers(ReadInteger);
         end;
         TitleAsHeader := ReadBoolean;
-
-{*** Updated 12/29/00 ***}
         Orientation := ReadInteger;
 
       except
@@ -762,8 +753,6 @@ begin
   begin
     Result := iftNET;
     if AutoBackup then
-
-{*** Use Delphi library version of CopyFile (7/3/07) ***}
       CopyFile(PChar(Fname),PChar(ChangeFileExt(Fname,'.bak')), FALSE);
   end;
 

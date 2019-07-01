@@ -3,21 +3,12 @@ unit Dsource;
 {-------------------------------------------------------------------}
 {                    Unit:    Dsource.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             11/19/01                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box that edits water quality source     }
 {   options for a node.                                             }
-{                                                                   }
-{   NOTE: The 11/19/01 update (build 2.00.09) corrected the order   }
-{         in which the source type strings are displayed in the     }
-{         dialog's RadioGroup1 component. The correct order is:     }
-{            Concentration, Mass Booster, Setpoint Booster, and     }
-{            Flow Paced Booster.                                    }
-{         This change was made directly by editing the component's  }
-{         Items property within the Delphi IDE.                     }
 {-------------------------------------------------------------------}
 
 interface
@@ -125,7 +116,7 @@ end;
 
 procedure TSourceForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(245);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 245);
 end;
 
 end.

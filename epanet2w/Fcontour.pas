@@ -3,10 +3,8 @@ unit Fcontour;
 {-------------------------------------------------------------------}
 {                    Unit:    Fcontour.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             12/29/00                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays a contour plot of a node           }
@@ -1081,7 +1079,6 @@ begin
     MapWidth := FrameWidth;
     MapHeight := FrameHeight;
 
-{*** Updated 12/29/00 ***}
   // Adjust bounding box to preserve aspect ratio & center it
     SF := ClientHeight/ClientWidth;
     if MapHeight/SF > MapWidth
@@ -1108,7 +1105,7 @@ begin
     GoToYPos(FrameTop+MapHeight);
     NextLine;
     if GetLinesLeft > 1 then PrintCenter(MapForm.TimeLegendPanel.Caption);
-    Screen.Cursor := crDefault;          {*** Updated 12/29/00 ***}
+    Screen.Cursor := crDefault;
     EndJob;
   end;
 end;

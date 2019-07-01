@@ -3,8 +3,8 @@ unit Dmapexp;
 {-------------------------------------------------------------------}
 {                    Unit:    Dmapexp.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/30/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box that exports the Network            }
@@ -142,7 +142,7 @@ end;
 
 procedure TMapExportForm.Button3Click(Sender: TObject);
 begin
-  Application.HelpContext(280);
+   HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 280);
 end;
 
 end.

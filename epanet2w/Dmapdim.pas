@@ -3,8 +3,8 @@ unit Dmapdim;
 {-------------------------------------------------------------------}
 {                    Unit:    Dmapdim.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box sets dimensions of the Network Map. }
@@ -148,7 +148,7 @@ end;
 
 procedure TMapDimensionsForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(288);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 288);
 end;
 
 end.

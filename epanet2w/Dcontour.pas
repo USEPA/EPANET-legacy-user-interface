@@ -3,8 +3,8 @@ unit Dcontour;
 {-------------------------------------------------------------------}
 {                    Unit:    Dcontour.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box that retrieves options for          }
@@ -185,7 +185,7 @@ end;
 
 procedure TContourOptionsForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(231);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 231);
 end;
 
 end.

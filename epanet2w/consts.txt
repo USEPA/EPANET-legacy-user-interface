@@ -2,7 +2,7 @@
 {                    Unit:    Consts.txt                            }
 {                    Project: EPANET2W                              }
 {                    Version: 2.2                                   }
-{                    Date:    5/23/19                               }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {  Constants used with EPANET2W and imported into Uglobals.pas.     }
@@ -106,7 +106,7 @@ const
     (Name:'Pressure';        Style:esReadOnly;Mask:emNone),
     (Name:'Quality';         Style:esReadOnly;Mask:emNone));
 
-  TankProps:  array [0..20] of TPropRecord =
+  TankProps:  array [0..21] of TPropRecord =
    ((Name:'*Tank ID';       Style:esEdit;    Mask:emNoSpace;  Length:MAXID),
     (Name:'X-Coordinate';   Style:esEdit;    Mask:emNumber),
     (Name:'Y-Coordinate';   Style:esEdit;    Mask:emNumber),
@@ -119,6 +119,8 @@ const
     (Name:'*Diameter';      Style:esEdit;    Mask:emPosNumber),
     (Name:'Minimum Volume'; Style:esEdit;    Mask:emPosNumber),
     (Name:'Volume Curve';   Style:esEdit;    Mask:emNoSpace;  Length:MAXID),
+    (Name:'Can Overflow';   Style:esComboList; Mask:emNone;   Length:0;
+     List:'No'#13'Yes'),
     (Name:'Mixing Model';   Style:esComboList; Mask:emNone;   Length:0;
      List:'Mixed'#13'2Comp'#13'FIFO'#13'LIFO'),
     (Name:'Mixing Fraction';Style:esEdit;    Mask:emPosNumber),
@@ -289,7 +291,7 @@ const
                      '',        //6 - Source Pattern
                      'CONCEN'); //7 - Source Type
 
-  DefTank:   array [0..15] of String =              //Index in TankProps:
+  DefTank:   array [0..16] of String =              //Index in TankProps:
                    ('',        //0 - Comment              (3)
                     '',        //1 - Tag                  (4)
                     '0',       //2 - Elevation            (5)
@@ -305,7 +307,8 @@ const
                     '',        //12 - Initial Quality     (15)
                     '',        //13 - Source Quality      (16)
                     '',        //14 - Source Pattern
-                    'CONCEN'); //15 - Source Type
+                    'CONCEN',  //15 - Source Type
+                    'No');     //16 - Can Overflow
 
   DefPipe:   array [0..8] of String =               //Index in PipeProps:
                    ('',        //0 - Comment              (3)
@@ -381,15 +384,16 @@ const
                      '',            {34-Price pattern}
                      '0',           {35-Demand charge}
 
-                     '0',           {36-Max Head Error}
-                     '0',           {37-Max Flow Change}
-                     'DDA',         {38-Demand Model}
-                     '0',           {39-Minimum Pressure}
-                     '0',           {40-Required Pressure}
-                     '0.5',         {41-Pressure Exponent}
-                     '2',           {42-CHECKFREQ}
-                     '10',          {43-MAXCHECK}
-                     '0');          {44-DAMPLIMIT}
+                     '2',           {36-CHECKFREQ}
+                     '10',          {37-MAXCHECK}
+                     '0',           {38-DAMPLIMIT}
+
+                     '0',           {39-Max Head Error}
+                     '0',           {40-Max Flow Change}
+                     'DDA',         {41-Demand Model}
+                     '0',           {42-Minimum Pressure}
+                     '0',           {43-Required Pressure}
+                     '0.5');        {44-Pressure Exponent}
 
 //Node reporting variables
 //  Name         = name of variable

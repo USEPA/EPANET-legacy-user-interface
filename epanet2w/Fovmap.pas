@@ -3,8 +3,8 @@ unit Fovmap;
 {-------------------------------------------------------------------}
 {                    Unit:    Fovmap.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit that contains a full-scale outline of the network     }
@@ -37,6 +37,7 @@ type
     procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X,
       Y: Integer);
     procedure FormActivate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     OVmap    : Tmap;
@@ -113,6 +114,13 @@ procedure TOVMapForm.FormDestroy(Sender: TObject);
 //--------------------------------------------------
 begin
   OVmap.Free;
+end;
+
+procedure TOVMapForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key = VK_F1
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 170);
 end;
 
 procedure TOVMapForm.FormResize(Sender: TObject);

@@ -3,8 +3,8 @@ unit Fsummary;
 {-------------------------------------------------------------------}
 {                    Unit:    Fsummary.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit that displays a Project Summary that allows the       }
@@ -31,6 +31,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure BtnOKClick(Sender: TObject);
     procedure EditTitleChange(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     LocalChange: Boolean;
@@ -90,6 +91,13 @@ begin
   MemoStats.SelStart := 0;
   LocalChange := False;
   BtnCancel.Visible := False;
+end;
+
+procedure TSummaryForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Key = VK_F1)
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 143);
 end;
 
 procedure TSummaryForm.BtnOKClick(Sender: TObject);

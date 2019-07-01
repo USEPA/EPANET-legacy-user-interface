@@ -65,8 +65,6 @@ object ChartOptionsDlg: TChartOptionsDlg
     OnChange = PageControl1Change
     object GeneralPage: TTabSheet
       Caption = 'General'
-      ExplicitTop = 24
-      ExplicitHeight = 284
       object Label1: TLabel
         Left = 16
         Top = 24
@@ -136,7 +134,7 @@ object ChartOptionsDlg: TChartOptionsDlg
         Left = 212
         Top = 157
         Width = 16
-        Height = 21
+        Height = 23
         Associate = Pct3DEdit
         Min = 1
         Increment = 5
@@ -377,6 +375,10 @@ object ChartOptionsDlg: TChartOptionsDlg
     object LegendPage: TTabSheet
       Caption = 'Legend'
       ImageIndex = 3
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label18: TLabel
         Left = 16
         Top = 28
@@ -465,7 +467,7 @@ object ChartOptionsDlg: TChartOptionsDlg
         Left = 257
         Top = 112
         Width = 16
-        Height = 21
+        Height = 23
         Associate = LegendWidthEdit
         Min = 5
         Increment = 5
@@ -488,6 +490,10 @@ object ChartOptionsDlg: TChartOptionsDlg
       Caption = 'Series'
       ImageIndex = 4
       OnExit = StylesPageExit
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label21: TLabel
         Left = 8
         Top = 19
@@ -538,6 +544,10 @@ object ChartOptionsDlg: TChartOptionsDlg
           TabOrder = 0
           object LineOptionsSheet: TTabSheet
             Caption = 'Lines'
+            ExplicitLeft = 0
+            ExplicitTop = 0
+            ExplicitWidth = 0
+            ExplicitHeight = 0
             object Label23: TLabel
               Left = 55
               Top = 14
@@ -611,6 +621,10 @@ object ChartOptionsDlg: TChartOptionsDlg
           object MarkOptionsSheet: TTabSheet
             Caption = 'Markers'
             ImageIndex = 1
+            ExplicitLeft = 0
+            ExplicitTop = 0
+            ExplicitWidth = 0
+            ExplicitHeight = 0
             object Label26: TLabel
               Left = 55
               Top = 14
@@ -684,6 +698,10 @@ object ChartOptionsDlg: TChartOptionsDlg
           object AreaOptionsSheet: TTabSheet
             Caption = 'Patterns'
             ImageIndex = 2
+            ExplicitLeft = 0
+            ExplicitTop = 0
+            ExplicitWidth = 0
+            ExplicitHeight = 0
             object Label29: TLabel
               Left = 47
               Top = 14
@@ -790,6 +808,10 @@ object ChartOptionsDlg: TChartOptionsDlg
           object LabelsOptionsSheet: TTabSheet
             Caption = 'Labels'
             ImageIndex = 4
+            ExplicitLeft = 0
+            ExplicitTop = 0
+            ExplicitWidth = 0
+            ExplicitHeight = 0
             object Label33: TLabel
               Left = 43
               Top = 14

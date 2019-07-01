@@ -74,9 +74,10 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Keys>CompanyName=US EPA;FileDescription=$(MSBuildProjectName);FileVersion=2.0.12.0;InternalName=;LegalCopyright=Public Domain;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=2.0.12;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=US EPA;FileDescription=$(MSBuildProjectName);FileVersion=2.2.0.0;InternalName=;LegalCopyright=Public Domain;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=2.2.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
         <VerInfo_MajorVer>2</VerInfo_MajorVer>
-        <VerInfo_Release>12</VerInfo_Release>
+        <VerInfo_MinorVer>2</VerInfo_MinorVer>
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -205,9 +206,6 @@
         <DCCReference Include="Dcopy.pas">
             <Form>CopyToForm</Form>
         </DCCReference>
-        <DCCReference Include="Dsource.pas">
-            <Form>SourceForm</Form>
-        </DCCReference>
         <DCCReference Include="Dinperr.pas">
             <Form>InpErrForm</Form>
         </DCCReference>
@@ -222,6 +220,10 @@
         <DCCReference Include="Uexport.pas"/>
         <DCCReference Include="Dchart.pas">
             <Form>ChartOptionsDlg</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Dsource.pas">
+            <Form>SourceForm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Debug">

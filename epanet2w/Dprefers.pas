@@ -4,7 +4,7 @@ unit Dprefers;
 {                    Unit:    Dprefers.pas                          }
 {                    Project: EPANET2W                              }
 {                    Version: 2.2                                   }
-{                    Date:    5/23/19                               }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box for setting program preferences.    }
@@ -182,12 +182,12 @@ begin
 end;
 
 procedure TPreferencesForm.BtnHelpClick(Sender: TObject);
+var
+  HC: Integer;
 begin
    with PageControl1 do
-     if ActivePage = TabSheet1 then
-       Application.HelpContext(137)
-     else
-       Application.HelpContext(142);
+     if ActivePage = TabSheet1 then HC := 137 else HC := 142;
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

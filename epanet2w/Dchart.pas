@@ -3,8 +3,8 @@ unit Dchart;
    Unit:    Dchart.pas
    Project: EPANET4W
    Author:  L. Rossman
-   Version: 1.0
-   Date:    04/30/18
+   Version: 2.2
+   Date:    6/24/19
 
    This is dialog form used to set display options for a
    TChart component.
@@ -1006,8 +1006,19 @@ begin
 end;
 
 procedure TChartOptionsDlg.HelpBtnClick(Sender: TObject);
+var
+  HC: Integer;
 begin
-    Application.HelpCommand(HELP_CONTEXT, 230);
+  case PageControl1.ActivePageIndex of
+    0:   HC := 250;
+    1:   HC := 251;
+    2:   HC := 251;
+    3:   HC := 252;
+    4:   HC := 253;
+    else HC := 0;
+  end;
+  if HC > 0
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

@@ -4,7 +4,7 @@ unit Uglobals;
 {                    Unit:    Uglobals.pas                          }
 {                    Project: EPANET2W                              }
 {                    Version: 2.2                                   }
-{                    Date:    5/23/19                               }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that defines all global data types and       }
@@ -52,14 +52,14 @@ const
 // Version ID
 //------------------
   VERSIONID1 = 20005;
-  VERSIONID2 = 20201;   {*** Updated 5/22/2019 ***}
+  VERSIONID2 = 20201;
 
 //------------------
 // Maximum limits
 //------------------
   MAXID        = 31; //Max. chars. in ID label
   MAXINTERVALS = 4;  //Max. color scale interval index
-  MAXNODEPROPS = 25; //Max. index for node property array
+  MAXNODEPROPS = 26; //Max. index for node property array
   MAXLINKPROPS = 25; //Max. index for link property array
   MAXOPTIONS   = 44; //Max. index for network options array
   MAXSERIES    = 5;  //Max. time series plots per graph
@@ -176,6 +176,7 @@ const
   TANK_SRCQUAL_INDEX  = 13; //Source quality
   TANK_SRCPAT_INDEX   = 14; //Source pattern
   TANK_SRCTYPE_INDEX  = 15; //Source type
+  TANK_OVERFLOW_INDEX = 16; //Overflow indicator
 
 //----------------------
 // Pipe property indexes
@@ -259,15 +260,17 @@ const
   EPRICE_INDEX        = 33; //Default energy price
   PRICE_PAT_INDEX     = 34; //Default price pattern
   DMND_CHARGE_INDEX   = 35; //Energy demand charge
-  HEAD_ERROR_INDEX    = 36; //Head error tolerance
-  FLOW_CHANGE_INDEX   = 37; //Flow change tolerance
-  DEMAND_MODEL_INDEX  = 38; //Demand model type
-  MIN_PRESSURE_INDEX  = 39; //Minimum service pressure
-  REQ_PRESSURE_INDEX  = 40; //Required service pressure
-  PRESSURE_EXP_INDEX  = 41; //Exponent in demand v. pressure function
-  CHECK_FREQ_INDEX    = 42; //Frequency of status checks
-  MAX_CHECK_INDEX     = 43; //Trials when status checks end
-  DAMP_LIMIT_INDEX    = 44; //Accuracy limit to begin damping
+
+  CHECK_FREQ_INDEX    = 36; //Frequency of status checks
+  MAX_CHECK_INDEX     = 37; //Trials when status checks end
+  DAMP_LIMIT_INDEX    = 38; //Accuracy limit to begin damping
+
+  HEAD_ERROR_INDEX    = 39; //Head error tolerance
+  FLOW_CHANGE_INDEX   = 40; //Flow change tolerance
+  DEMAND_MODEL_INDEX  = 41; //Demand model type
+  MIN_PRESSURE_INDEX  = 42; //Minimum service pressure
+  REQ_PRESSURE_INDEX  = 43; //Required service pressure
+  PRESSURE_EXP_INDEX  = 44; //Exponent in demand v. pressure function
 
 //-----------------
 // Graph-type codes
@@ -430,8 +433,8 @@ type
     LabelZoom        : Integer;
     SymbolZoom       : Integer;
     ArrowZoom        : Integer;
-    NotationSize     : Integer;        {*** Updated 3/1/01 ***}
-    DispLinkBorder   : Boolean;        {*** Added 5/11/18 ***}
+    NotationSize     : Integer;
+    DispLinkBorder   : Boolean;
   end;
 
 //-----------
@@ -622,10 +625,7 @@ type
 // Map label object
 //-----------------
   TMapLabel = class(Tobject)
-
-{*** Updated 11/19/01 ***}
     X, Y      : Extended;    // X,Y coordinates
-
     Anchor    : TNode;       // Anchor node
     MeterType : Integer;     // Meter type
     MeterId   : String;      // ID of object being metered
@@ -717,8 +717,8 @@ const
      LabelZoom       : 100;
      SymbolZoom      : 100;
      ArrowZoom       : 100;
-     NotationSize    : 7;             {*** Updated 3/1/01 ***}
-     DispLinkBorder  : False);        {*** Added 5/11/18 ***}
+     NotationSize    : 7;
+     DispLinkBorder  : False);
 
   DefGraphOptions: TGraphOptions =
     (View3D          : False;
@@ -791,8 +791,6 @@ var
   UpdateFlag    : Boolean;              //Records if data changed after a run
   TitleAsHeader : Boolean;              //Use project title as page header
   PageLayout    : TPageLayout;          //Printed page size & margins
-
-{*** Updated 12/29/00 ***}
   Orientation   : Integer;              //Page orientation
 
 //-----------------
@@ -823,10 +821,7 @@ var
 //---------------
   EpanetDir     : String;               //Program start-up directory
   WindowsDir    : String;               //Windows directory
-
-{*** Added 7/3/07 ***}
   IniFileDir    : String;               //Program settings directory
-    
   TempDir       : String;               //Temporary file directory
   InputFileName : String;               //Name of input data file
   InputFileType : TInputFileType;       //Type of input file

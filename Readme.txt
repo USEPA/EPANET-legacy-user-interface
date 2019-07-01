@@ -8,7 +8,7 @@ of the network, and selectively view simulation results in a variety of
 different formats.
 
 The code has been compiled successfully with the Professional Version
-of Embarcadero's Delphi 10 or with the Delphi 10 Starter Version in
+of Embarcadero's Delphi 10 or with the Delphi 10 Community Edition in
 combination with Steema's TeeChart components. The executable produced
 from this code is named epanet2w.exe and works together with the
 following files that are all part of the EPANET 2 distribution package:

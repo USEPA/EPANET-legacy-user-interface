@@ -3,10 +3,8 @@ unit Fgraph;
 {-------------------------------------------------------------------}
 {                    Unit:    Fgraph.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             4/30/18                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays network data and analysis          }
@@ -152,22 +150,14 @@ begin
   begin
     LeftAxis.MaximumRound := True;
     BottomAxis.MaximumRound := True;
-    LeftAxis.MinimumRound := True;      {--- 5/11/18 ---}
-    BottomAxis.MinimumRound := True;    {--- 5/11/18 ---}
+    LeftAxis.MinimumRound := True;
+    BottomAxis.MinimumRound := True;
   end;
 
   // Make the left mouse zoom when shift key is pressed
   Chart1.Zoom.KeyShift :=[ssShift];
   Chart1.ScrollMouseButton := mbLeft;
 
-{  DEPRECATED
-// Set the mouse & keyboard controls for zooming
-// & scrolling the TeeChart component
-  TeeZoomMouseButton := mbLeft;
-  TeeZoomKeyShift := [ssCtrl];
-  TeeScrollMouseButton := mbRight;
-  TeeScrollKeyShift := [ssCtrl];
-}
 // Initialize chart properties
   with Chart1 do
   begin
@@ -419,10 +409,7 @@ begin
       then CalibDataPlot(LinkCalibData[VarType].FileName, ID);
     end;
   end;
-  //with Chart1 do
-  //  if Series[SeriesCount-1].Count = 0 then Legend.Visible := False;
 
-{---  Added 5/11/18  ---}
   // Scale the axes
   SetAxisScale(Chart1.BottomAxis);
   SetAxisScale(Chart1.LeftAxis);
@@ -701,7 +688,7 @@ begin
         AddXY(Single(aList.Items[i]^), 100*i/en, '', clTeeColor);
       Active := True;
     end;
-    SetAxisScale(Chart1.LeftAxis);     {---  Added 5/11/18  ---}
+    SetAxisScale(Chart1.LeftAxis);
 
   finally
     aList.Free;
@@ -1205,21 +1192,9 @@ var
 begin
   with Axis do
   begin
-{  DEPRECATED
-    Automatic := True;
-    AutomaticMinimum := True;
-    AutomaticMaximum := True;
-}
     if Horizontal then i := 0
     else i := 1;
     Grid.Visible := GraphOptions.AxisGridStyle[i] > 0;
-{  DEPRECATED
-    case GraphOptions.AxisGridStyle[i] of
-    0: Grid.Visible := False;
-    1: Grid.Style := psSolid;
-    2: Grid.Style := psDot;
-    end;
-}
     Title.Font.Name := GraphOptions.AxisFontName;
     Title.Font.Size := GraphOptions.AxisFontSize;
     if GraphOptions.AxisFontBold then
@@ -1264,11 +1239,6 @@ begin
     with Chart1.BottomAxis do
     begin
       AxisGridStyle[0] := Integer(Grid.Visible);
-{  DEPRECATED
-      if not Grid.Visible then AxisGridStyle[0] := 0
-      else if Grid.Style = psSolid then AxisGridStyle[0] := 1
-      else if Grid.Style = psDot then AxisGridStyle[0] := 2;
-}
       with Title.Font do
       begin
         AxisFontName := Name;
@@ -1279,11 +1249,6 @@ begin
     with Chart1.LeftAxis do
     begin
       AxisGridStyle[1] := Integer(Grid.Visible);
-{  DEPRECATED
-      if not Grid.Visible then AxisGridStyle[1] := 0
-      else if Grid.Style = psSolid then AxisGridStyle[1] := 1
-      else if Grid.Style = psDot then AxisGridStyle[1] := 2;
-}
     end;
     for i := 0 to Chart1.SeriesCount-1 do
     begin

@@ -3,9 +3,8 @@ unit Dcurve;
 {-------------------------------------------------------------------}
 {                    Unit:    Dcurve.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             2/14/08   (2.00.12)                   }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box for editing an X-Y curve.           }
@@ -621,7 +620,7 @@ end;
 
 procedure TCurveForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(233);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 233);
 end;
 
 end.

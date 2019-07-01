@@ -3,8 +3,8 @@ unit Dgraph;
 {-------------------------------------------------------------------}
 {                    Unit:    Dgraph.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box that selects a type of graph to     }
@@ -575,7 +575,7 @@ end;
 
 procedure TGraphSelectForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(287);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 287);
 end;
 
 end.

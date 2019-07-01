@@ -3,8 +3,8 @@ unit Dpattern;
 {-------------------------------------------------------------------}
 {                    Unit:    Dpattern.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit containing a Time Pattern Editor dialog box.          }
@@ -483,7 +483,7 @@ end;
 
 procedure TPatternForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(234);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 234);
 end;
 
 end.

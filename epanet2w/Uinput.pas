@@ -4,7 +4,7 @@ unit Uinput;
 {                    Unit:    Uinput.pas                            }
 {                    Project: EPANET2W                              }
 {                    Version: 2.2                                   }
-{                    Date:    5/23/19                               }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that provides interface routines to          }
@@ -482,7 +482,6 @@ procedure EditNode(const Ntype: Integer; const Index: Integer);
 var
   i    : Integer;
   v    : Integer;
-  last : Integer;
   aNode: TNode;
 begin
 //Set caption for Property Editor window
@@ -501,12 +500,18 @@ begin
     if aNode.Y = MISSING then PropList.Add('')
     else PropList.Add(Format('%f',[aNode.Y]));
     case Ntype of
-      JUNCS:   last := JUNC_SRCQUAL_INDEX;
-      RESERVS: last := RES_SRCQUAL_INDEX;
-      TANKS:   last := TANK_SRCQUAL_INDEX;
-      else     last := -1;
+      JUNCS:
+        for i := 0 to JUNC_SRCQUAL_INDEX do PropList.Add(aNode.Data[i]);
+      RESERVS:
+        for i := 0 to RES_SRCQUAL_INDEX do PropList.Add(aNode.Data[i]);
+      TANKS:
+        begin
+          for i := 0 to TANK_VCURVE_INDEX do PropList.Add(aNode.Data[i]);
+          PropList.Add(aNode.Data[TANK_OVERFLOW_INDEX]);
+          for i := TANK_MIXMODEL_INDEX to TANK_SRCQUAL_INDEX do
+            PropList.Add(aNode.Data[i]);
+        end;
     end;
-    for i := 0 to last do PropList.Add(aNode.Data[i]);
 
   // Add output values to PropList
     for v := DEMAND to NODEQUAL do
@@ -637,7 +642,9 @@ begin
       0:  begin
             for k := FLOW_UNITS_INDEX to STATUS_RPT_INDEX do //Hydraulics
               PropList.Add(Data[k]);
-            for k := HEAD_ERROR_INDEX to DAMP_LIMIT_INDEX do
+            for k := HEAD_ERROR_INDEX to PRESSURE_EXP_INDEX do
+              PropList.Add(Data[k]);
+            for k := CHECK_FREQ_INDEX to DAMP_LIMIT_INDEX do
               PropList.Add(Data[k]);
           end;
 
@@ -1294,16 +1301,20 @@ begin
   9:                                       {Diam}
      Result := Uutils.GetSingle(S,v);
   10,                                      {MinVol}
-  13,                                      {MixFrac}
-  14,                                      {Kbulk}
-  15:                                      {InitQual}
+  14,                                      {MixFrac}
+  15,                                      {Kbulk}
+  16:                                      {InitQual}
      if (Length(Trim(S)) > 0) then
        Result := Uutils.GetSingle(S,v);
   end;
   if Result then
   begin
     MainForm.SetChangeFlags;
-    k := I - PROP_INDEX_OFFSET;
+    k := -1;                               //ID, X, Y
+    if (I >= 3) and (I <= 11)
+      then k := I - 3                      //Elev - VolCurve
+    else if I = 12 then k := 16            //Overflow
+    else if I >= 13 then k := I - 4;       //MixModel - SrcQual
     if k >= 0 then
     begin
       Node(TANKS,EditorIndex).Data[k] := S;
@@ -1479,11 +1490,12 @@ var
   k: Integer;
 begin
   Result := True;
-  k := I;                           
+  k := I;
+  // Convert from editor index I to property index k
   case EditorIndex of
-    0: if I <= STATUS_RPT_INDEX     //HYDRAULICS
-       then k := I
-       else k := I - STATUS_RPT_INDEX - 1 + HEAD_ERROR_INDEX;
+    0: if I < 11 then k := I       //HYDRAULICS
+       else if I < 17 then k := HEAD_ERROR_INDEX + (I - 11)
+       else k := CHECK_FREQ_INDEX + (I - 17);
 
     1: k := QUAL_PARAM_INDEX  + I;  //QUALITY
     2: k := BULK_ORDER_INDEX + I;   //REACTIONS

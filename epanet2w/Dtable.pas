@@ -3,9 +3,8 @@ unit Dtable;
 {-------------------------------------------------------------------}
 {                    Unit:    Dtable.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box used to select options for a Table. }
@@ -560,13 +559,17 @@ end;
 
 
 procedure TTableOptionsForm.HelpBtnClick(Sender: TObject);
+//----------------------------------------------
+// OnClick handler for the Help button.
+//----------------------------------------------
+var
+  HC: Integer;
 begin
   with PageControl1 do
-    if ActivePage = TableTypePage then
-      Application.HelpContext(264)
-    else if ActivePage = ColumnsPage then
-      Application.HelpContext(265)
-    else Application.HelpContext(266);
+    if ActivePage = TableTypePage then HC := 264
+    else if ActivePage = ColumnsPage then HC := 265
+    else HC := 266;
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

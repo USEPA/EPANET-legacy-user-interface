@@ -3,8 +3,8 @@ unit Dlegend;
 {-------------------------------------------------------------------}
 {                    Unit:    Dlegend.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box for editing a map legend.           }
@@ -474,7 +474,7 @@ end;
 
 procedure TLegendForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(217);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 217);
 end;
 
 end.

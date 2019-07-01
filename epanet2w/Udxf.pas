@@ -3,9 +3,8 @@ unit Udxf;
 {-------------------------------------------------------------------}
 {                    Unit:    Udxf.pas                              }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that exports the Network Map to a file       }

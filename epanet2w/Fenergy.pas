@@ -3,10 +3,8 @@ unit Fenergy;
 {-------------------------------------------------------------------}
 {                    Unit:    Fenergy.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             12/29/00                              }
-{                             4/30/18                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays an Energy Report summarizing       }
@@ -55,6 +53,7 @@ type
     procedure RadioGroup1Click(Sender: TObject);
     procedure Chart1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 
   private
     { Private declarations }
@@ -64,7 +63,6 @@ type
     procedure CopyToString(const Fname: String);
     procedure RefreshTable;
     procedure RefreshChart;
-{   procedure SetAxisStyle(Axis: TChartAxis);  DEPRECATED  }
 
   public
     { Public declarations }
@@ -104,37 +102,18 @@ begin
     ColWidths[0] := 112;
   end;
 
-{  DEPRECATED
-// Set axis properties of chart
-  Chart1.BottomAxis.Title.Caption := 'Pump';
-  with Chart1 do
-  begin
-    SetAxisStyle(BottomAxis);
-    SetAxisStyle(LeftAxis);
-  end;
-}
-
 // Set initial page to display
   PageControl1.ActivePage := TabSheet1;
   RadioGroup1.ItemIndex := 2;
 end;
 
-{  DEPRECATED
-procedure TEnergyForm.SetAxisStyle(Axis: TChartAxis);
-//---------------------------------------------------
-// Sets font style of a chart's axis
-//---------------------------------------------------
+
+procedure TEnergyForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
 begin
-  with Axis do
-  begin
-    if BoldFonts then
-      Title.Font.Style := Title.Font.Style + [fsBold]
-    else
-      Title.Font.Style := [];
-    LabelsFont.Assign(Title.Font);
-  end;
+  if (Key = VK_F1)
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 268);
 end;
-}
 
 
 procedure TEnergyForm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -260,8 +239,6 @@ begin
     ColHeading2[3] := TXT_perM3
   else
     ColHeading2[3] := TXT_perMGAL;
-
-{*** Updated 12/29/00 ***}
   RadioGroup1.Items[2] := ColHeading1[3] + ColHeading2[3];
 
 // Table has one row for each pump plus rows for

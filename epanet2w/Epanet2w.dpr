@@ -47,7 +47,6 @@ uses
   Dprefers in 'Dprefers.pas' {PreferencesForm},
   Uinifile in 'Uinifile.pas',
   Dcopy in 'Dcopy.pas' {CopyToForm},
-  Dsource in 'Dsource.pas' {SourceForm},
   Dinperr in 'Dinperr.pas' {InpErrForm},
   Dmapexp in 'Dmapexp.pas' {MapExportForm},
   epanet2 in 'epanet2.pas',
@@ -56,7 +55,8 @@ uses
   Uexport in 'Uexport.pas',
   Dchart in 'Dchart.pas' {ChartOptionsDlg},
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  Dsource in 'Dsource.pas' {SourceForm};
 
 {$R *.RES}
 

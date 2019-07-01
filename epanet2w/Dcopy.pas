@@ -3,8 +3,8 @@ unit Dcopy;
 {-------------------------------------------------------------------}
 {                    Unit:    Dcopy.pas                             }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/30/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog that gets choice of format and          }
@@ -120,7 +120,7 @@ procedure TCopyToForm.BtnHelpClick(Sender: TObject);
 // OnClick handler for the Help button.
 //-----------------------------------------------
 begin
-  Application.HelpContext(301);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 301);
 end;
 
 end.

@@ -3,15 +3,12 @@ unit Fcalib;
 {-------------------------------------------------------------------}
 {                    Unit:    Fcalib.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             6/24/02                               }
-{                             4/30/18                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays a Calibration Report comparing     }
 {   simulated results against observed data.                        }
-{                                                                   }
 {-------------------------------------------------------------------}
 
 (*******************************************************************
@@ -68,15 +65,12 @@ const
   TXT_NO_DATA = ' *** No observed data during simulation period. ***';
   TXT_CORRELATION = '  Correlation Between Means: ';
   TXT_TITLE = ' Calibration Statistics for ';
-
-{*** Updated 6/24/02 ***}
   TXT_HEADING1 =
   '                Num    Observed    Computed    Mean     RMS';
   TXT_HEADING2 =
   '  Location      Obs        Mean        Mean   Error   Error';
   TXT_HEADING3 =
   '  ---------------------------------------------------------';
-{*** End of update ***}
 
   MarkerColors : array[0..14] of TColor =
     (clBlack, clRed, clPurple, clLime, clBlue, clFuchsia, clAqua,
@@ -98,6 +92,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure FormActivate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     RptType : Integer;
@@ -297,6 +292,23 @@ begin
   FreeChart1Series;
 end;
 
+
+procedure TCalibReportForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  HC: Integer;
+begin
+  if Key = vk_F1 then
+  begin
+    case PageControl1.ActivePageIndex of
+      0: HC := 270;
+      1: HC := 271;
+      2: HC := 272;
+      else HC := 0;
+    end;
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
+  end;
+end;
 
 procedure TCalibReportForm.FreeChart1Series;
 begin

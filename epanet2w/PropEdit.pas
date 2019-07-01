@@ -308,9 +308,6 @@ begin
     Visible := False;
     OnKeyPress := EditKeyPress;
     OnKeyDown := EditKeyDown;
-
-    //OnChange := EditChange;
-
   end;
 
   // FCombo is used to edit choices
@@ -579,30 +576,6 @@ begin
   if Key = VK_F1 then SendMessage(FGrid.Handle,WM_KEYDOWN,Key,0);
 end;
 
-{
-procedure TPropEdit.EditChange(Sender: TObject);
-//-----------------------------------------------------------------------------
-// OnChange event handler for the Edit control. Prevents mis-placed
-// negative sign in numbers.
-//-----------------------------------------------------------------------------
-var
-  idx: Integer;
-  bsp: String;
-begin
-  if (Sender = FEdit) and (EditMask = emNumber) then
-  with Sender as TEdit do
-  begin
-    idx := Pos('-', Text);
-    if idx > 1 then
-    begin
-      bsp := Text;
-      Delete(bsp, idx, 1);
-      Text := bsp;
-      MessageBeep(0);
-    end;
-  end;
-end;
-}
 
 procedure TPropEdit.EditExit(Sender: TObject);
 //-----------------------------------------------------------------------------
@@ -671,7 +644,7 @@ begin
   begin
     S := FGrid.Cells[1, aRow];
     FOnButtonClick(self, aRow);
-    GoValidate(S);
+//    GoValidate(S); {v.1.4}
   end;
 end;
 
@@ -706,7 +679,6 @@ begin
     // If not valid then raise an exception
     else raise EInvalidProperty.Create('Invalid Property Value');
 
-////  Modified for version 1.3.
   except
     // Specific error messages should be displayed in FOnValidate
     on E:EInvalidProperty do
@@ -1116,10 +1088,7 @@ begin
   // Re-size the editor's grid and populate its cells
   with FGrid do
   begin
-{*** Changed for v1.4 ***}
-//  RowCount := high(PropArray) - low(PropArray) + 1;
     RowCount := Values.Count;
-
     ResizeGrid(self);
     for i := 0 to RowCount - 1 do
     begin

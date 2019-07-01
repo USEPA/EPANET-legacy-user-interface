@@ -4,7 +4,7 @@ unit Uimport;
 {                    Unit:    Uimport.pas                           }
 {                    Project: EPANET2W                              }
 {                    Version: 2.2                                   }
-{                    Date:    5/23/10                               }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that imports network database files, map     }
@@ -14,7 +14,7 @@ unit Uimport;
 interface
 
 uses
- Classes, Forms, Controls, Dialogs, SysUtils, System.UITypes,
+ Classes, Forms, Controls, Dialogs, SysUtils, System.UITypes, Math,
  Uutils, Uglobals;
 
 const
@@ -123,7 +123,6 @@ const
   SourceWords: array[0..3] of PChar =
     ('CONCEN','MASS','SETPOINT','FLOWPACED');
 
-{*** Updated 6/24/02 ***}
   CurveWords: array[0..3] of PChar =
     ('POWER','PATTERN','HEAD','SPEED');
 
@@ -212,7 +211,7 @@ function ReadTankData: Integer;
 //----------------------------------------------------------------------
 // Parses tank/reservoir data with formats:
 //  ReservID  Elev.  (Pattern)
-//  TankID    Elev.  (InitLvl  MinLvl  MaxLvl  Diam.  MinVol.  VolCurve)
+//  TankID    Elev.  (InitLvl  MinLvl  MaxLvl  Diam.  MinVol.  VolCurve  Overflow)
 //----------------------------------------------------------------------
 var
   J    : Integer;
@@ -227,6 +226,8 @@ begin
     aNode := TNode.Create;
     aNode.X := MISSING;
     aNode.Y := MISSING;
+
+    // Check if processing a Reservoir or Tank
     if Ntoks <= 3 then
     begin
       aNode.Zindex := RESERVS;
@@ -237,9 +238,25 @@ begin
       aNode.Zindex := TANKS;
       Uutils.CopyStringArray(DefProp[TANKS].Data,aNode.Data);
     end;
+
+    // Assign tokens (indexes 1 - 7) to data items (indexes 2 - 8)
     aNode.Data[0] := Comment;
-    for J := 1 to Ntoks-1 do
+     for J := 1 to Math.min(Ntoks-1, 7) do
       aNode.Data[J+1] := TokList[J];
+
+    // Check if tank curve name is placeholder value '*'
+    if SameText(aNode.Data[TANK_VCURVE_INDEX], '*')
+    then aNode.Data[TANK_VCURVE_INDEX] := '';
+
+    // Parse overflow indicator if present
+    if (Ntoks > 8) then
+    begin
+      if SameText(TokList[8], 'Yes')
+      then aNode.Data[TANK_OVERFLOW_INDEX] := 'Yes'
+      else aNode.Data[TANK_OVERFLOW_INDEX] := 'No';
+    end;
+
+    // Add node to network
     if Ntoks <= 3 then Network.Lists[RESERVS].AddObject(ID, aNode)
     else               Network.Lists[TANKS].AddObject(ID, aNode);
     NodeList.AddObject(ID, aNode);
@@ -352,7 +369,6 @@ end;
 procedure ReadNewPumpData(aLink: TLink);
 //---------------------------------------------------------------------
 // Reads pump data with format:
-// *** Updated 6/24/02 ***
 //   PumpID  Node1  Node2  (POWER  value  PATTERN  patID  HEAD  curveID
 //                          SPEED  value)
 // where keyword-value pairs can be in any order
@@ -368,8 +384,6 @@ begin
     0:  aLink.Data[PUMP_HP_INDEX]      := TokList[i];   {Power value}
     1:  aLink.Data[PUMP_PATTERN_INDEX] := TokList[i];   {Speed pattern}
     2:  aLink.Data[PUMP_HCURVE_INDEX]  := TokList[i];   {Pump curve id}
-
-{*** Updated 6/24/02 ***}
     3:  aLink.Data[PUMP_SPEED_INDEX]   := TokList[i];   {Pump speed}
     end;
     i := i + 2;
@@ -1257,10 +1271,7 @@ function ReadCoordData: Integer;
 var
   index: Integer;
   ntype: Integer;
-
-{*** Updated 11/19/01 ***}
   x,y  : Extended;
-
   aNode: TNode;
 begin
   Result := 0;
@@ -1280,16 +1291,10 @@ begin
   // If node exists then assign it X & Y coordinates
     if (aNode <> nil) then
     begin
-
-{*** Updated 11/19/01 ***}
       if not Uutils.GetExtended(TokList[1],x) then Result := 201
-
       else
       begin
-
-{*** Updated 11/19/01 ***}
         if not Uutils.GetExtended(TokList[2],y) then Result := 201
-
         else
         begin
           aNode.X := x;
@@ -1308,10 +1313,7 @@ function ReadVertexData: Integer;
 var
   Index: Integer;
   Ltype: Integer;
-
-{*** Updated 11/19/01 ***}
   x,y  : Extended;
-
   aLink: TLink;
   aVertex: PVertex;
 begin
@@ -1336,16 +1338,10 @@ begin
   // If link exists then assign it X & Y coordinates
     if (aLink <> nil) then
     begin
-
-{*** Updated 11/19/01 ***}
       if not Uutils.GetExtended(TokList[1],x) then Result := 201
-
       else
       begin
-
-{*** Updated 11/19/01 ***}
         if not Uutils.GetExtended(TokList[2],y) then Result := 201
-
         else
         begin
           new(aVertex);
@@ -1367,26 +1363,17 @@ function ReadLabelData: Integer;
 var
   ntype    : Integer;
   index    : Integer;
-
-{*** Updated 11/19/01 ***}
   x, y     : Extended;
-
   s        : String;
   aMapLabel: TMapLabel;
 begin
   if (Ntoks < 3) then Result := 201
   else
   begin
-
-{*** Updated 11/19/01 ***}
     if not Uutils.GetExtended(TokList[0],x) then Result := 201
-
     else
     begin
-
-{*** Updated 11/19/01 ***}
       if not Uutils.GetExtended(TokList[1],y) then Result := 201
-
       else
       begin
         s := TokList[2];

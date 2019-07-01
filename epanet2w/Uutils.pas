@@ -3,14 +3,8 @@ unit Uutils;
 {-------------------------------------------------------------------}
 {                    Unit:    Uutils.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             11/19/01                              }
-{                             7/3/07                                }
-{                             2/14/08   (2.00.12)                   }
-{                             4/30/18                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit containing general purpose utility           }
@@ -42,19 +36,12 @@ type
   EInvalidDest = class(EStreamError);
   EFCantMove = class(EStreamError);
 
-{*** Updated 12/29/00 ***}
-//procedure AdjustAspectRatio(const Aratio: Single; var Width: Single;
-//            var Height: Single);
-
 procedure AutoScale(var Zmin: Double; var Zmax: Double; var T: Double);
 
 procedure ChartToPicture(aChart: TChart; aPicture: TPicture);
 procedure Cls(Canvas: TCanvas; aRect: TRect; aColor: TColor);
 function  CompareSingles(a, b: Pointer): Integer;
 function  CompareStrVals(const S1,S2: String; const R: TRelationType): Boolean;
-
-{*** Procedure removed (7/3/07) ***}
-//procedure CopyFile(const FileName, DestName: string);
 
 procedure CopyStringArray(const Source: array of String;
                           var Dest: array of String);
@@ -66,9 +53,7 @@ function  FindKeyWord(const S: String; const Words: array of PChar;
 procedure FitChartToPage(aChart: TChart; const PageWidth, PageHeight: Single;
             var ChartWidth, ChartHeight: Single);
 
-{*** New function added (7/3/07) ***}
 function  GetAppDataDir(const AppName: String; const AppDir: String): String;
-
 function  GetDecimalChar:Char;
 function  GetExtended(const S: String; var X: Extended): Boolean;
 function  GetFileSize(const FileName: string): LongInt;
@@ -89,9 +74,6 @@ function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
           Buttons: TMsgDlgButtons): Integer; overload;
 function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
           Buttons: TMsgDlgButtons; F: TForm): Integer; overload;
-
-{*** Procedure removed (7/3/07). ***}
-//procedure MoveFile(const FileName, DestName: string);
 
 function  PtOnLine(const P1: TPoint; const P2: TPoint;
                    const P: TPoint; const Ptol: Integer): Boolean;
@@ -311,7 +293,7 @@ begin
   for k := 0 to High(Words) do
   begin
     s1 := Copy(Words[k], 1, N);
-    if Pos(s1, s2) = 1 then                                                     //(2.00.12 - LR)
+    if Pos(s1, s2) = 1 then
     begin
       Result := k;
       Exit;
@@ -355,7 +337,6 @@ begin
 end;
 
 
-{***  New function added (7/3/07) ***}
 function  GetAppDataDir(const AppName: String; const AppDir: String): String;
 //-----------------------------------------------------------------------------
 //  Returns a directory in a user's space where data files for
@@ -598,7 +579,7 @@ begin
 end;
 
 
-function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;                      //(5.1.008)
+function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
           Buttons: TMsgDlgButtons): Integer; overload;
 //-----------------------------------------------------------------------------
 //  Displays a message dialog in center of currently active form.
@@ -608,7 +589,7 @@ begin
 end;
 
 
-function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;                      //(5.1.008)
+function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
           Buttons: TMsgDlgButtons; F: TForm): Integer; overload;
 //-----------------------------------------------------------------------------
 //  Displays a message dialog in center of a specific form.
@@ -809,7 +790,6 @@ begin
       end;
     end
 
-{*** Updated 11/19/01 ***}
     else if (c = Chr(34))      {Quote found}
     and not intoken then
     begin
@@ -819,7 +799,7 @@ begin
         instring := False;
         Inc(N);
       end
-{************************}
+
       else                     {Start new string}
       begin
         instring := True;

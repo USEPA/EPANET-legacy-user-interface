@@ -3,9 +3,8 @@ unit Dcalib1;
 {-------------------------------------------------------------------}
 {                    Unit:    Dcalib1.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             4/30/18                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit containing a dialog form that obtains names of        }
@@ -186,7 +185,7 @@ end;
 
 procedure TCalibDataForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(178);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 178);
 end;
 
 end.

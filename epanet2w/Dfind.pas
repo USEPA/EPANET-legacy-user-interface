@@ -3,11 +3,8 @@ unit Dfind;
 {-------------------------------------------------------------------}
 {                    Unit:    Dfind.pas                             }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             11/19/01                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box used to find a specific node or     }
