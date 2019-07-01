@@ -1,20 +1,21 @@
 CONTENTS OF EPANET2W.ZIP
 =========================
 This archive contains the Delphi source code for the Windows graphical
-user interface, EPANET2W, that runs EPANET Version 2.0. EPANET is a 
+user interface, EPANET2W, that runs EPANET Version 2.2. EPANET is a 
 pipe network analysis program that allows a user to create or import a
 pipe network database, compute the hydraulic and water quality behavior
 of the network, and selectively view simulation results in a variety of
 different formats.
 
 The code has been compiled successfully with the Professional Version
-of Borland's Delphi 7. The executable produced from this code is named
-epanet2w.exe and works together with the following files that are all
-part of the EPANET 2 distribution package: epanet2.dll, epanet2.hlp,
-epanet2.cnt, and tutorial.hlp.
+of Embarcadero's Delphi 10 or with the Delphi 10 Starter Version in
+combination with Steema's TeeChart components. The executable produced
+from this code is named epanet2w.exe and works together with the
+following files that are all part of the EPANET 2 distribution package:
+epanet2.dll, epanet2.chm, and tutorial.chm.
 
 The EPANET2W application is a fairly large one, consisting of 38
-forms, 11 Pascal units, and 7 custom components.
+forms, 11 Pascal units, and 5 custom components.
 
 ---------------------------------------------------------------------
 NOTE: Before loading the EPANET2W project into the Delphi IDE you

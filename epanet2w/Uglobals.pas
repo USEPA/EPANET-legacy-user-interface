@@ -3,13 +3,8 @@ unit Uglobals;
 {-------------------------------------------------------------------}
 {                    Unit:    Uglobals.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    6/1/00                                }
-{                             9/7/00                                }
-{                             1/5/01                                }
-{                             3/1/01                                }
-{                             11/19/01                              }
-{                             2/14/07      (2.00.12)                }
+{                    Version: 2.2                                   }
+{                    Date:    5/23/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that defines all global data types and       }
@@ -35,7 +30,6 @@ type
 
   PVertex = ^TVertex;
 
-{*** Updated 11/19/01 ***}
   TVertex = record
     X    : Extended;
     Y    : Extended;
@@ -58,21 +52,16 @@ const
 // Version ID
 //------------------
   VERSIONID1 = 20005;
-  VERSIONID2 = 20008;  {*** Updated 3/1/01 ***}
+  VERSIONID2 = 20201;   {*** Updated 5/22/2019 ***}
 
 //------------------
 // Maximum limits
 //------------------
-{*** Updated 7/3/07 ***}
   MAXID        = 31; //Max. chars. in ID label
-
   MAXINTERVALS = 4;  //Max. color scale interval index
   MAXNODEPROPS = 25; //Max. index for node property array
   MAXLINKPROPS = 25; //Max. index for link property array
-
-{*** Modified for 2.00.12 ***}
-  MAXOPTIONS   = 38; //Max. index for network options array
-
+  MAXOPTIONS   = 44; //Max. index for network options array
   MAXSERIES    = 5;  //Max. time series plots per graph
   MAXCOLS      = 15; //Max. columns in a table
   MAXFILTERS   = 10; //Max. filter conditions for table
@@ -266,16 +255,19 @@ const
   RPT_START_INDEX     = 29; //Report start time
   START_TIME_INDEX    = 30; //Starting time of day
   TIME_STAT_INDEX     = 31; //Time statistic option
-
   EFFIC_INDEX         = 32; //Default pump effic.
   EPRICE_INDEX        = 33; //Default energy price
   PRICE_PAT_INDEX     = 34; //Default price pattern
   DMND_CHARGE_INDEX   = 35; //Energy demand charge
-
-{*** Added for 2.00.12 ***}
-  CHECK_FREQ_INDEX    = 36;
-  MAX_CHECK_INDEX     = 37;
-  DAMP_LIMIT_INDEX    = 38;
+  HEAD_ERROR_INDEX    = 36; //Head error tolerance
+  FLOW_CHANGE_INDEX   = 37; //Flow change tolerance
+  DEMAND_MODEL_INDEX  = 38; //Demand model type
+  MIN_PRESSURE_INDEX  = 39; //Minimum service pressure
+  REQ_PRESSURE_INDEX  = 40; //Required service pressure
+  PRESSURE_EXP_INDEX  = 41; //Exponent in demand v. pressure function
+  CHECK_FREQ_INDEX    = 42; //Frequency of status checks
+  MAX_CHECK_INDEX     = 43; //Trials when status checks end
+  DAMP_LIMIT_INDEX    = 44; //Accuracy limit to begin damping
 
 //-----------------
 // Graph-type codes
@@ -306,7 +298,7 @@ const
 // Map and default legend colors
 //------------------------------
   MapBackColor: array[1..5] of TColor =
-    (clWhite, clInfoBk, clSilver, clBlack, clWhite);
+    (clWhite, clInfoBk, clBtnFace, clBlack, clWhite);
   MapForeColor: array[1..5] of TColor =
     (clBlack, clBlack, clBlack, clWhite, clSilver);
   MapGrayColor: array[1..5] of TColor =
@@ -439,6 +431,7 @@ type
     SymbolZoom       : Integer;
     ArrowZoom        : Integer;
     NotationSize     : Integer;        {*** Updated 3/1/01 ***}
+    DispLinkBorder   : Boolean;        {*** Added 5/11/18 ***}
   end;
 
 //-----------
@@ -724,14 +717,15 @@ const
      LabelZoom       : 100;
      SymbolZoom      : 100;
      ArrowZoom       : 100;
-     NotationSize    : 7);             {*** Updated 3/1/01 ***}
+     NotationSize    : 7;             {*** Updated 3/1/01 ***}
+     DispLinkBorder  : False);        {*** Added 5/11/18 ***}
 
   DefGraphOptions: TGraphOptions =
     (View3D          : False;
      Percent3D       : 25;
      PanelColor      : clBtnFace;
      BackColor       : clWhite;
-     LegendPosition  : 1;
+     LegendPosition  : 2;
      LegendColor     : clWhite;
      LegendWidth     : 60;
      LegendFramed    : True;
@@ -785,6 +779,7 @@ var
 //--------------------
 // Program preferences
 //--------------------
+  StyleName     : String;
   FontName      : String;
   BoldFonts     : Boolean;              //Dialogs use bold fonts
   Blinking      : Boolean;              //Map hilighter blinks
@@ -1193,7 +1188,7 @@ begin
   with aForm.Font do
   begin
     Name := FontName;  //'Arial'; //'MS Sans Serif';
-    Size := 8;
+    Size := 9;  //8;
     if BoldFonts then Style := [fsBold]
     else Style := [];
   end;

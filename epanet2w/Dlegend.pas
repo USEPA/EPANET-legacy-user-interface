@@ -17,7 +17,7 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, ColorGrd, ExtCtrls, Grids, StdCtrls, Buttons,
-  Uglobals, Uutils;
+  System.UITypes, Uglobals, Uutils;
 
 const
   MSG_RANGE_TOO_SMALL = 'Range too small.';
@@ -145,7 +145,7 @@ begin
 // Issue warning message if no edit boxes filled in
   if count = 0 then
   begin
-    MessageDlg(MSG_NO_INTERVALS,mtWarning,[mbOK],0);
+    Uutils.MsgDlg(MSG_NO_INTERVALS,mtWarning,[mbOK]);
     Edit1.SetFocus;
   end
   else
@@ -297,7 +297,7 @@ begin
     Uoutput.GetLinkMinMax(LegendVar,LegendPeriod,xmin,xmax);
   end;
   if (xmax = MISSING) then
-    MessageDlg(MSG_RANGE_TOO_SMALL,mtWarning,[mbOK],0)
+    Uutils.MsgDlg(MSG_RANGE_TOO_SMALL,mtWarning,[mbOK])
   else
   begin
     try
@@ -311,7 +311,7 @@ begin
       end;
       dx := (xmax - xmin)/(MAXINTERVALS+1);
     except
-      MessageDlg(MSG_RANGE_TOO_SMALL,mtWarning,[mbOK],0);
+      Uutils.MsgDlg(MSG_RANGE_TOO_SMALL,mtWarning,[mbOK]);
       Exit;
     end;
     for i := 1 to MAXINTERVALS do
@@ -346,7 +346,7 @@ begin
     Uoutput.GetLinkQuantiles(LegendVar,LegendPeriod,X);
   end;
   if (X[1] = X[MAXINTERVALS]) then
-    MessageDlg(MSG_RANGE_TOO_SMALL,mtWarning,[mbOK],0)
+    Uutils.MsgDlg(MSG_RANGE_TOO_SMALL,mtWarning,[mbOK])
   else
   begin
     for i := 1 to MAXINTERVALS do

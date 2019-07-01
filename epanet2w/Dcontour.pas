@@ -15,15 +15,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, Spin, Uglobals, Fcontour, ExtCtrls, ComboColor;
+  StdCtrls, Spin, Uglobals, Fcontour, ExtCtrls;
 
-const
-  Colors: array[0..15] of TColor =
-    (clBlack,clMaroon,clGreen,clOlive,clNavy,clPurple,clTeal,clGray,clSilver,
-     clRed,clLime,clYellow,clBlue,clFuchsia,clAqua,clWhite);
-  ColorText: array[0..15] of PChar =
-    ('Black','Maroon','Green','Olive','Navy','Purple','Teal','Gray','Silver',
-     'Red','Lime','Yellow','Blue','Fuchsia','Aqua','White');
 type
   TContourOptionsForm = class(TForm)
     BtnOK: TButton;
@@ -40,14 +33,14 @@ type
     Label3: TLabel;
     Label4: TLabel;
     Label5: TLabel;
-    ForeColorBox: TComboColor;
-    BackColorBox: TComboColor;
     LinkSize: TSpinEdit;
     ContourGroup: TGroupBox;
     NumLines: TSpinEdit;
     LineSize: TSpinEdit;
     DefaultBox: TCheckBox;
     LgndModify: TButton;
+    ForeColorBox: TColorBox;
+    BackColorBox: TColorBox;
     procedure FormCreate(Sender: TObject);
     procedure LgndModifyClick(Sender: TObject);
     procedure StyleFilledClick(Sender: TObject);
@@ -58,7 +51,6 @@ type
   private
     { Private declarations }
     Cform: TContourForm;
-    function GetColorIndex(aColor: TColor): Integer;
   public
     { Public declarations }
     procedure LoadOptions(Sender: TObject);
@@ -78,19 +70,11 @@ procedure TContourOptionsForm.FormCreate(Sender: TObject);
 //-------------------------------------------------------
 // OnCreate handler for form.
 //-------------------------------------------------------
-var
-  i: Integer;
+
 begin
 
 // Set font size and style
   Uglobals.SetFont(self);
-
-// Load colors into ComboColor controls
-  for i := 0 to High(Colors) do
-  begin
-    BackColorBox.AddColor(ColorText[i],Colors[i]);
-    ForeColorBox.AddColor(ColorText[i],Colors[i]);
-  end;
 end;
 
 procedure TContourOptionsForm.LoadOptions(Sender: TObject);
@@ -107,8 +91,10 @@ begin
     LgndDisplay.Checked := Cform.LegendPanel.Visible;
     if (Cform.Options.Style = csFilled) then StyleFilled.Checked := True;
     if (Cform.Options.Style = csLines) then StyleLines.Checked := True;
-    BackColorBox.ItemIndex := GetColorIndex(Cform.Options.BackColor);
-    ForeColorBox.ItemIndex := GetColorIndex(Cform.Options.ForeColor);
+    //BackColorBox.ItemIndex := GetColorIndex(Cform.Options.BackColor);
+    //ForeColorBox.ItemIndex := GetColorIndex(Cform.Options.ForeColor);
+    BackColorBox.Selected := Cform.Options.BackColor;
+    ForeColorBox.Selected := Cform.Options.ForeColor;
     LinkSize.Value := Cform.Options.LinkSize;
     LineSize.Value := Cform.Options.LineSize;
     NumLines.Value := Cform.Options.NumLines;
@@ -126,8 +112,8 @@ begin
     LegendPanel.Visible := LgndDisplay.Checked;
     if (StyleFilled.Checked) then Options.Style := csFilled;
     if (StyleLines.Checked) then Options.Style := csLines;
-    Options.BackColor := Colors[BackColorBox.ItemIndex];
-    Options.ForeColor := Colors[ForeColorBox.ItemIndex];
+    Options.BackColor := BackColorBox.Selected;
+    Options.ForeColor := ForeColorBox.Selected;
     Options.LinkSize := LinkSize.Value;
     if (StyleLines.Checked) then
     begin
@@ -139,8 +125,8 @@ begin
   begin
     if (StyleFilled.Checked) then DefContourOptions.Style := csFilled;
     if (StyleLines.Checked) then DefContourOptions.Style := csLines;
-    DefContourOptions.BackColor := Colors[BackColorBox.ItemIndex];
-    DefContourOptions.ForeColor := Colors[ForeColorBox.ItemIndex];
+    DefContourOptions.BackColor := BackColorBox.Selected;
+    DefContourOptions.ForeColor := ForeColorBox.Selected;
     DefContourOptions.LinkSize := LinkSize.Value;
     if (StyleLines.Checked) then
     begin
@@ -195,18 +181,6 @@ procedure TContourOptionsForm.BtnCancelClick(Sender: TObject);
 begin
   Hide;
   ModalResult := mrCancel;
-end;
-
-function TContourOptionsForm.GetColorIndex(aColor: TColor): Integer;
-//-----------------------------------------------------------------
-// Determines position in Colors array occupied by color aColor.
-//-----------------------------------------------------------------
-var
-  i: Integer;
-begin
-  for i := 0 to High(Colors) do
-    if (aColor = Colors[i]) then break;
-  Result := i;
 end;
 
 procedure TContourOptionsForm.BtnHelpClick(Sender: TObject);

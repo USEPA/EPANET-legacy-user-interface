@@ -44,7 +44,8 @@ uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Spin, StdCtrls, ExtCtrls, Tabs, Buttons, Menus,
 {*** Updated 12/29/00 ***}
-  Clipbrd, Math, Printers, Xprinter, Uglobals, Uutils, Umap;
+  Clipbrd, Math, Printers, System.Types, System.UITypes,
+  Xprinter, Uglobals, Uutils, Umap;
 
 const
   MAXZOOMRATIO = 1000000;    //Max. zoom-in ratio
@@ -101,7 +102,7 @@ type
     Timer1: TTimer;
     Timer2: TTimer;
 
-    procedure CreateParams(var Params: TCreateParams); override;
+////    procedure CreateParams(var Params: TCreateParams); override;
     procedure FormCreate(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure FormPaint(Sender: TObject);
@@ -278,7 +279,7 @@ var
 //================================================================
 //             Form Creation, Resizing and Destruction
 //================================================================
-
+{
 procedure TMapForm.CreateParams(var Params: TCreateParams);
 //-------------------------------------------------------------
 // Positions the map form on creation so that it fills the
@@ -291,11 +292,11 @@ begin
     X := 0;
     Y := 0;
     Width := MainForm.ClientWidth - BrowserForm.Width - 4;
-    Height := MainForm.ClientHeight - MainForm.Dock971.Height -
+    Height := MainForm.ClientHeight - MainForm.ControlBar1.Height -            //
               MainForm.StatusPanel.Height - 4;
   end;
 end;
-
+}
 
 procedure TMapForm.FormCreate(Sender: TObject);
 //-------------------------------------------------
@@ -311,7 +312,14 @@ begin
 //       icon to not display properly at times.
 //       Maybe this is some Delphi bug related
 //       to overriding the CreateParams function.
-  BorderStyle := bsSizeable;
+  //BorderStyle := bsSizeable;
+
+    Left := 0;
+    Top := 0;
+    Width := MainForm.ClientWidth - BrowserForm.Width - 4;
+    Height := MainForm.ClientHeight - MainForm.ControlBar1.Height -            //
+              MainForm.StatusPanel.Height - 4;
+
 
 //Create a map object
   Map := TMap.Create;
@@ -551,6 +559,7 @@ begin
   EraseFenceline;
   MapBackdrop := DefMapBackdrop;
   MapDimensions := DefMapDimensions;
+  Map.Resize(ClientRect);                //Added on 4/30/18 (LR)
   Map.Rescale(MapDimensions);
   PopupBackdrop.Checked := False;
   PopupBackdrop.Enabled := False;
@@ -699,10 +708,10 @@ var
 begin
   if Length(MapBackdrop.Filename) = 0 then Exit;
   Opened := False;
-  if not FileExists(MapBackdrop.Filename) then
-    MessageDlg(MSG_NO_FIND_BACKDROP + MapBackdrop.Filename, mtError, [mbOK], 0)
-  else if not Map.RedrawBackdrop then
-    MessageDlg(MSG_NO_READ_BACKDROP + MapBackdrop.Filename, mtError, [mbOK], 0)
+  if not FileExists(MapBackdrop.Filename) then Uutils.MsgDlg(
+    MSG_NO_FIND_BACKDROP + MapBackdrop.Filename, mtError, [mbOK], MainForm)
+  else if not Map.RedrawBackdrop then Uutils.MsgDlg(
+    MSG_NO_READ_BACKDROP + MapBackdrop.Filename, mtError, [mbOK], MainForm)
   else Opened := True;
   if not Opened then
   begin
@@ -757,7 +766,7 @@ begin
     begin
       if (CurrentTool = JUNCS) and not (Map.Options.DispJuncs) then
       begin
-        MessageDlg(TXT_RESTORE_JUNCS, mtInformation, [mbOK], 0);
+        Uutils.MsgDlg(TXT_RESTORE_JUNCS, mtInformation, [mbOK], MainForm);
         Map.Options.DispJuncs := True;
         RedrawMap;
       end;
@@ -773,7 +782,7 @@ begin
       if not Map.Options.DispLabels
         or (MapZoomRatio < Map.Options.LabelZoom) then
       begin
-        MessageDlg(TXT_RESTORE_LABELS, mtInformation, [mbOK], 0);
+        Uutils.MsgDlg(TXT_RESTORE_LABELS, mtInformation, [mbOK], MainForm);
         Map.Options.DispLabels := True;
         Map.Options.LabelZoom := MapZoomRatio;
         RedrawMap;
@@ -2996,9 +3005,9 @@ begin
     Map.Options.ColorIndex := oldColorIndex;
     Map.ResizeWindow(oldRect);
     Map.Window.PPW := oldPPW;
+    Screen.Cursor := crDefault;
     EndJob;
   end;
-  Screen.Cursor := crDefault;
 end;
 
 end.

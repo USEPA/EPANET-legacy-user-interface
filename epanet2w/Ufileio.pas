@@ -16,7 +16,7 @@ interface
 
 uses Dialogs, Classes, SysUtils, Forms, Controls, Windows, Math,
      //Printers,
-     FileCtrl, PgSetup, Uglobals, Uutils;
+     FileCtrl, System.UITypes, PgSetup, Uglobals, Uutils;
 
 const
   MSG_READING_INPUT = 'Reading input file...';
@@ -154,14 +154,14 @@ begin
     FileStream := TFileStream.Create(Fname,
       fmCreate or fmOpenWrite or fmShareDenyWrite);
   except
-    MessageDlg(FILE_ERR3a + Fname + '.' + #10 + #10 + FILE_ERR2b,
-      mtError, [mbOK], 0);
+    Uutils.MsgDlg(FILE_ERR3a + Fname + '.' + #10 + #10 + FILE_ERR2b,
+      mtError, [mbOK]);
     Exit;
   end;
 
 // Create a writer object
   try
-    errflag := True;
+    //errflag := True;
     Writer := TWriter.Create(FileStream, $ff);
 
     with Writer do
@@ -386,7 +386,7 @@ begin
   end;
 
   if errflag = True then
-      MessageDlg(FILE_ERR5, mtError, [mbOK], 0);
+      Uutils.MsgDlg(FILE_ERR5, mtError, [mbOK]);
 end;
 
 
@@ -417,8 +417,8 @@ var
 
 begin
 // Create a FileStream object
-  Result := 0;
   try
+    //Result := 0;
     FileStream := TFileStream.Create(Fname, fmOpenRead);
   except
     Result := FILE_NO_OPEN;
@@ -467,6 +467,13 @@ begin
         ReadArray(Reader,Network.Options.Data);
         QualParam := Uinput.GetQualParam;
         AutoLength := ReadBoolean;
+
+      //Use default values for new options not included in earlier versions
+        if (Version < VersionID2) then
+        begin
+          for i := HEAD_ERROR_INDEX to PRESSURE_EXP_INDEX do
+            Network.Options.Data[i] := DefOptions[i];
+        end;
 
       //Check if Quality Time Step is in hours instead of minutes
         with Network.Options do
@@ -736,8 +743,8 @@ begin
 // File can't be opened
   if R = FILE_NO_OPEN then
   begin
-    MessageDlg(FILE_ERR3a + Fname + '.' + #10 + #10 + FILE_ERR2b,
-      mtError, [mbOK], 0);
+    Uutils.MsgDlg(FILE_ERR3a + Fname + '.' + #10 + #10 + FILE_ERR2b,
+      mtError, [mbOK]);
   end
 
 // File not a .NET file;
@@ -745,8 +752,8 @@ begin
   else if R = FILE_NO_NET then
   begin
     if Uimport.ReadInpFile(Fname) then Result := iftINP
-    else MessageDlg(FILE_ERR4a + Fname + '.' + #10 + #10 + FILE_ERR4b,
-      mtError, [mbOK], 0);
+    else Uutils.MsgDlg(FILE_ERR4a + Fname + '.' + #10 + #10 + FILE_ERR4b,
+      mtError, [mbOK]);
   end
 
 // File is a .NET file;
@@ -825,13 +832,13 @@ begin
     end
 
   // File access error
-    else MessageDlg(FILE_ERR2a + Fname + '.' + #13 + #13 + FILE_ERR2b,
-           mtError, [mbOK],0);
+    else Uutils.MsgDlg(FILE_ERR2a + Fname + '.' + #13 + #13 + FILE_ERR2b,
+           mtError, [mbOK]);
     CloseFile(F);
   end
 
 // File does not exist error
-  else MessageDlg(FILE_ERR1a + Fname + FILE_ERR1b, mtError, [mbOK], 0);
+  else Uutils.MsgDlg(FILE_ERR1a + Fname + FILE_ERR1b, mtError, [mbOK]);
 end;
 
 procedure RegisterCalibData;

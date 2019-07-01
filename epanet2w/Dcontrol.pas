@@ -15,7 +15,8 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, Uglobals, ComCtrls;
+  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls, System.UITypes,
+  Uglobals;
 
 type
   TControlsForm = class(TForm)

@@ -20,13 +20,16 @@ unit Xprinter;
    Author:  L. Rossman
    Version: 1.0
    Date:    1/30/00
+
+   All references to TChart component removed - 4/29/2018 (LR)
 }
 
 interface
 
 uses
   SysUtils, Windows, Messages, Classes, Graphics, Controls,
-  Forms, StdCtrls, Printers, ExtCtrls, Buttons, Dialogs, Chart, XPForm;
+  Forms, StdCtrls, Printers, ExtCtrls, //VCLTee.Chart,
+  Buttons, Dialogs, System.UITypes, XPForm;
 
 
 const
@@ -338,8 +341,8 @@ type
     procedure PositionGraphic(Alignment: TJustify; aPicture: TPicture);
     procedure StretchGraphic(Xtop,Ytop,Xbottom,Ybottom: Single;
                              aPicture: TPicture);
-    procedure StretchChart(Xtop, Ytop, Xbottom, Ybottom: Single;
-                           aChart: TChart);
+////    procedure StretchChart(Xtop, Ytop, Xbottom, Ybottom: Single;
+////                           aChart: TChart);
 
     { Header/Footer Methods }
     procedure SetHeaderInformation( Line:Integer; YPosition: Single;
@@ -389,7 +392,10 @@ type
 implementation
 
 {$R *.DFM}
+{$R 'Xprinter.dcr'}
 
+uses
+  System.Types;
 
 procedure Register;
 begin
@@ -458,6 +464,7 @@ constructor TPrintControl.Create(AOwner: TComponent);
      Size := 10;
      Style := [];
      End;
+   //SetFont(fFont);
    fPen := TPen.Create;
 
    fAutoPaging := True;
@@ -1159,7 +1166,7 @@ procedure TPrintControl.DisplayPage(Page : Integer);
    { Displays a page on the Preview form. }
 
    Var
-   Sc: Single;
+   Scx, Scy: Single;
    r : TRect;
    i : Integer;
 
@@ -1168,7 +1175,8 @@ procedure TPrintControl.DisplayPage(Page : Integer);
 
       begin
       { Set size of page display on preview form }
-      Sc := fPreviewForm.PaintBox1.Width / TotalPageWidthPixels;
+      Scx := fPreviewForm.PaintBox1.Width / TotalPageWidthPixels;
+      Scy := fPreviewForm.PaintBox1.Height / TotalPageHeightPixels;
       fPreviewForm.PaintBox1.Canvas.Rectangle(
          0, 0, fPreviewForm.PaintBox1.Width,fPreviewForm.PaintBox1.Height);
       fPreviewForm.PaintBox1.Canvas.FillRect(
@@ -1176,10 +1184,10 @@ procedure TPrintControl.DisplayPage(Page : Integer);
               fPreviewForm.PaintBox1.Height - 2));
 
       { Find size of drawing area }
-      r.Left := Trunc(GutterLeft * Sc);
-      r.Top := Trunc(GutterTop * Sc);
-      r.Right := r.Left + Trunc(PageWidthPixels * Sc);
-      r.Bottom := r.Top + Trunc(PageHeightPixels * Sc);
+      r.Left := Trunc(GutterLeft * Scx);
+      r.Top := Trunc(GutterTop * Scy);
+      r.Right := r.Left + Trunc(PageWidthPixels * Scx);
+      r.Bottom := r.Top + Trunc(PageHeightPixels * Scy);
 
       { Draw grid if called for }
       if fPreviewForm.ShwGrdBtn.Down then
@@ -1191,15 +1199,15 @@ procedure TPrintControl.DisplayPage(Page : Integer);
             Rectangle(r.Left, r.Top, r.Right, r.Bottom);
             for i := 1 to TotalPageWidthPixels div PixelsPerInchHorizontal do
                begin
-               MoveTo(Trunc(i * PixelsPerInchHorizontal * Sc), 0);
-               LineTo(Trunc(i * PixelsPerInchHorizontal * Sc),
-                      Trunc(TotalPageHeightPixels * Sc));
+               MoveTo(Trunc(i * PixelsPerInchHorizontal * Scx), 0);
+               LineTo(Trunc(i * PixelsPerInchHorizontal * Scx),
+                      Trunc(TotalPageHeightPixels * Scy));
                end;
             for i := 1 to TotalPageHeightPixels div PixelsPerInchVertical do
                begin
-               MoveTo(0, Trunc(i * PixelsPerInchVertical * Sc));
-               LineTo(Trunc(TotalPageWidthPixels * Sc),
-                      Trunc(i * PixelsPerInchVertical * Sc));
+               MoveTo(0, Trunc(i * PixelsPerInchVertical * Scy));
+               LineTo(Trunc(TotalPageWidthPixels * Scx),
+                      Trunc(i * PixelsPerInchVertical * Scy));
                end;
             Pen.Style := psSolid;
             Pen.Color := clBlack;
@@ -1903,13 +1911,13 @@ procedure TPrintControl.StretchGraphic(Xtop,Ytop,Xbottom,Ybottom: Single;
    fCanvas.StretchDraw(Rect(x1,y1,x2,y2),aPicture.Graphic);
    End;
 
-
+{
 procedure TPrintControl.StretchChart(Xtop, Ytop, Xbottom, Ybottom: Single;
              aChart: TChart);
-
+}
    { Draws a TeeChart chart stretched to fit within the coordinates passed
      in as parameters (in absolute inches). }
-
+{
    Var
    L,R,T,B: Integer;
 
@@ -1920,7 +1928,7 @@ procedure TPrintControl.StretchChart(Xtop, Ytop, Xbottom, Ybottom: Single;
    B := InchesToPixelsVertical(Ybottom) - GutterTop;
    aChart.PrintPartialCanvas(fCanvas,Rect(L,T,R,B));
    End;
-
+}
 
 procedure TPrintControl._WriteHeaders;
 
@@ -2387,7 +2395,9 @@ end;
 procedure TPreviewForm.FormCreate(Sender: TObject);
 begin
 KeyPreview := True;
-WindowState := wsMaximized;
+//WindowState := wsMaximized;
+Width := Screen.Width;
+Height := Screen.Height;
 PageDisplaying := 1;
 end;
 

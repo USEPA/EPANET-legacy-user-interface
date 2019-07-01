@@ -3,11 +3,8 @@ unit Uinput;
 {-------------------------------------------------------------------}
 {                    Unit:    Uinput.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    6/1/00                                }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             2/14/08     (2.00.12)                 }
+{                    Version: 2.2                                   }
+{                    Date:    5/23/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that provides interface routines to          }
@@ -91,7 +88,8 @@ unit Uinput;
 interface
 
 uses Controls, Classes, SysUtils, Dialogs, Windows, Math,
-     Forms, Graphics, Uglobals, Uutils, Fproped;
+     Forms, Graphics, System.UITypes,
+     Uglobals, Uutils, Fproped;
 
 const
   FMT_NODE_EXISTS = 'Node %s already exists.';
@@ -529,7 +527,7 @@ procedure EditDemands(const Index: Integer);
 // Invokes Demand Editor form to edit junction's demands
 //-------------------------------------------------------
 begin
-  with TDemandsForm.Create(Application) do
+  with TDemandsForm.Create(PropEditForm) do
   try
     Caption := TXT_DEMAND_EDITOR + GetID(JUNCS,Index);
     LoadDemands;
@@ -636,12 +634,10 @@ begin
     with Options do
     begin
       case Index of
-
-{***  Modified for 2.00.12  ***}
       0:  begin
             for k := FLOW_UNITS_INDEX to STATUS_RPT_INDEX do //Hydraulics
               PropList.Add(Data[k]);
-            for k := CHECK_FREQ_INDEX to DAMP_LIMIT_INDEX do
+            for k := HEAD_ERROR_INDEX to DAMP_LIMIT_INDEX do
               PropList.Add(Data[k]);
           end;
 
@@ -1117,8 +1113,8 @@ begin
   end;
   UpdateEditor(EditorObject, EditorIndex);
   if Count > 0 then MainForm.SetChangeFlags;
-  MessageDlg(IntToStr(count) + ' ' + ObjectLabel[ObjType] +
-    TXT_WERE_UPDATED,mtInformation,[mbOK],0);
+  Uutils.MsgDlg(IntToStr(count) + ' ' + ObjectLabel[ObjType] +
+    TXT_WERE_UPDATED,mtInformation,[mbOK]);
 end;
 
 
@@ -1134,7 +1130,7 @@ var
   p1      : TPoint;
 begin
 // Confirm deletion
- if MessageDlg(MSG_CONFIRM_DELETE, mtConfirmation,[mbYes,mbNo],0) = mrNo
+ if Uutils.MsgDlg(MSG_CONFIRM_DELETE, mtConfirmation,[mbYes,mbNo]) = mrNo
    then Exit;
 
 //Create a GDI region from user's fenceline region
@@ -1485,11 +1481,9 @@ begin
   Result := True;
   k := I;                           
   case EditorIndex of
-
-{***  Modified for 2.00.12  ***}
     0: if I <= STATUS_RPT_INDEX     //HYDRAULICS
        then k := I
-       else k := I - STATUS_RPT_INDEX - 1 + CHECK_FREQ_INDEX;
+       else k := I - STATUS_RPT_INDEX - 1 + HEAD_ERROR_INDEX;
 
     1: k := QUAL_PARAM_INDEX  + I;  //QUALITY
     2: k := BULK_ORDER_INDEX + I;   //REACTIONS
@@ -2229,8 +2223,8 @@ begin
 // If ID exists then restore current ID & exit.
   if Network.Lists[CurrentList].IndexOf(S) >= 0 then
   begin
-    MessageDlg(MSG_ALREADY_HAVE + ObjectLabel[CurrentList] +
-      TXT_NAMED + S, mtError, [mbOK], 0);
+    Uutils.MsgDlg(MSG_ALREADY_HAVE + ObjectLabel[CurrentList] +
+      TXT_NAMED + S, mtError, [mbOK]);
     Network.Lists[CurrentList].Strings[i] := s1;
     Result := True;
     Exit;

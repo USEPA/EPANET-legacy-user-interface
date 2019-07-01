@@ -17,7 +17,8 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, ComCtrls, Clipbrd, Xprinter, Uglobals, Uutils;
+  Forms, Dialogs, StdCtrls, ComCtrls, Clipbrd, System.UITypes,
+  Xprinter, Uglobals, Uutils;
 
 const
   MSG_1 = 'Unable to load more than ';
@@ -96,7 +97,8 @@ begin
     Items.LoadFromFile(TempReportFile);
   except
     On E: Exception do
-      MessageDlg(MSG_1 + IntToStr(Items.Count) + MSG_2, mtWarning, [mbOK], 0);
+      Uutils.MsgDlg(MSG_1 + IntToStr(Items.Count) + MSG_2, mtWarning, [mbOK],
+      MainForm);
   end;
   if FileViewer.Items.Count >= 1 then FileViewer.ItemIndex := 0;
 end;

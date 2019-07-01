@@ -3,9 +3,8 @@
 //
 //  Property Editor Component for Delphi
 //
-//  Version 1.0
+//  Version 1.4
 //  Written by L. Rossman
-//  Updated 12/6/01
 //
 //  This is a TCustomPanel descendant that is used for editing an
 //  array of property values displayed in a 2-column grid. One
@@ -16,6 +15,7 @@
 //  structure, which consists of the following items:
 //    Name   -- a string containing the property's name
 //    Style  -- one of the following editing styles:
+//              esHeading   (displays only the property name as a heading)
 //              esReadOnly  (cannot be edited)
 //              esEdit      (edited in an Edit control)
 //              esComboList (edited in a csDropDownList ComboBox)
@@ -29,7 +29,7 @@
 //    Length -- maximum length of text (applies to Style esEdit)
 //    List   -- string that contains a list of possible choices for
 //              esComboList or esComboEdit styles, where each item is
-//              separated by CHR(13).
+//              separated by #13.
 //
 //  The editor is populated via the SetProps method which takes
 //  as arguments an array of property records, a stringlist with
@@ -47,16 +47,17 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ExtCtrls, StdCtrls, ComCtrls, Grids;
+  ExtCtrls, StdCtrls, ComCtrls, Grids, System.Types, System.UITypes;
 
 type
-// Types of edit field styles
-  TEditStyle = (esReadOnly, esEdit, esComboList, esComboEdit, esButton);
+  // Types of edit field styles
+  TEditStyle = (esHeading, esReadOnly, esEdit, esComboList, esComboEdit,
+                esButton);
 
-// Types of restrictions on an esEdit entry
+  // Types of restrictions on an esEdit entry
   TEditMask = (emNone, emNumber, emPosNumber, emNoSpace);
 
-// Information associated with each property
+  // Information associated with each property
   TPropRecord = record
     Name    : String;      // property name
     Style   : TEditStyle;  // style of edit field
@@ -65,20 +66,24 @@ type
     List    : String;      // list of option choices
   end;
 
-// Declare an array of Property records and a pointer to such an array
+  // An array of Property records and a pointer to such an array
   TPropArray = Array [0..0] of TPropRecord;
   PPropArray = ^TPropArray;
 
-// Declare event procedures used to validate an edited property value
-// and to launch any special editor associated with a property
+  // Event procedures used to validate an edited property value
   TValidateEvent = procedure(Sender: TObject; Index: Integer;
     var S: String; var Errmsg: String; var IsValid: Boolean) of Object;
+
+  // Event procedure launched when an esButton field is clicked
   TButtonClickEvent = procedure(Sender: TObject; Index: Integer) of Object;
 
-// Define special exception for invalid property values
+  // Event procedure launched when a new row (i.e., property) is selected
+  TRowSelectEvent = procedure(Sender: TObject; aRow: LongInt) of Object;
+
+  // Special exception class for invalid property values
   EInvalidProperty = class(Exception);
 
-// Declaration of the TPropEdit class
+  // Declaration of the TPropEdit class
   TPropEdit = class(TCustomPanel)
   private
     { Private declarations }
@@ -88,8 +93,10 @@ type
     FCombo         : TComboBox;           // Combobox for selecting choices
     FModified      : Boolean;             // Modified flag
     FRow           : Integer;             // Current property index
-    FReadOnlyColor : TColor;              // Back color of read-only values
-    FValueColor    : TColor;              // Fore color of property values
+    FReadOnlyColor : TColor;              // Backgnd color of read-only values
+    FValueColor    : TColor;              // Foregnd color of property values
+    FHeadBackColor : TColor;              // Backgnd color of heading row
+    FHeadForeColor : TColor;              // Foregnd color of heading row
     FColHeading1   : String;              // Heading of property name column
     FColHeading2   : String;              // Heading of property value column
     FHeaderSplit   : Integer;             // % of total width of Name column
@@ -97,18 +104,20 @@ type
     FValues        : TStrings;            // Stringlist with property values
     FOnValidate    : TValidateEvent;      // Property value validation event
     FOnButtonClick : TButtonClickEvent;   // Editor button OnClick event
+    FOnRowSelect   : TRowSelectEvent;     // Row selection event
     ButtonPressed  : Boolean;             // True if editor button pressed
     ButtonVisible  : Boolean;             // True if editor button visible
     VisibleRows    : Integer;             // Number of rows showing in editor
     CXVScroll      : Integer;             // Width of system horiz. scrollbar
     RowHeight      : Integer;             // Row height of StringGrid display
-    DecimalChar    : Char;                // Character used for decimal point
     ComponentsCreated: Boolean;           // True if sub-components created
     EditMask       : TEditMask;           // Edit mask for current property
     procedure CreateComponents;
     procedure DrawButton(aCanvas: TCanvas; aRect: TRect);
     procedure EditProperty(CurCol, CurRow: LongInt; Key: Char);
+    procedure SetDropDownWidth;
     procedure SetEditBounds(aControl : TWinControl);
+    procedure GoButtonClick(aRow: Integer);
     function  GoValidate(S: String): Boolean;
   protected
     { Protected declarations }
@@ -117,8 +126,12 @@ type
     procedure ResizeGrid(Sender: TObject);
     procedure EditKeyPress(Sender: TObject; var Key: Char);
     procedure EditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
-    procedure EditChange(Sender: TObject);
+
+//    procedure EditChange(Sender: TObject);
+
     procedure EditExit(Sender: TObject);
+    procedure ComboChange(Sender: TObject);
+    procedure ComboDblClick(Sender: TObject);
     procedure GridKeyPress(Sender: TObject; var Key: Char);
     procedure GridKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure GridClick(Sender: TObject);
@@ -129,8 +142,12 @@ type
     procedure GridDrawCell(Sender: TObject; vCol, vRow: Longint;
       Rect: TRect; State: TGridDrawState);
     procedure GridTopLeftChanged(Sender: TObject);
+    procedure GridSelectCell(Sender: TObject; ACol, ARow: Longint;
+      var CanSelect: Boolean);
     procedure SetReadOnlyColor(Value: TColor);
     procedure SetValueColor(Value: TColor);
+    procedure SetHeadBackColor(Value: TColor);
+    procedure SetHeadForeColor(Value: TColor);
     procedure SetColHeading1(Value: String);
     procedure SetColHeading2(Value: String);
     procedure SetHeaderSplit(Value: Integer);
@@ -140,6 +157,8 @@ type
     destructor  Destroy; override;
   published
     { Published declarations }
+    procedure SetProp(Index: Integer; Value: String);
+    function  GetProp(Index: Integer): String;
     procedure SetProps(var PropArray: array of TPropRecord; Values: TStrings);
     procedure GetProps(Plist, Vlist: TStringlist);
     procedure Edit;
@@ -148,12 +167,15 @@ type
     property  Row: Integer read FRow;
     property  ReadOnlyColor: TColor read FReadOnlyColor write SetReadOnlyColor;
     property  ValueColor: TColor read FValueColor write SetValueColor;
+    property  HeadBackColor: TColor read FHeadBackColor write SetHeadBackColor;
+    property  HeadForeColor: TColor read FHeadForeColor write SetHeadForeColor;
     property  ColHeading1: String read FColHeading1 write SetColHeading1;
     property  ColHeading2: String read FColHeading2 write SetColHeading2;
     property  HeaderSplit: Integer read FHeaderSplit write SetHeaderSplit;
     property  OnValidate: TValidateEvent read FOnValidate write FOnValidate;
     property  OnButtonClick: TButtonClickEvent read FOnButtonClick
                  write FOnButtonClick;
+    property  OnRowSelect: TRowSelectEvent read FOnRowSelect write FOnRowSelect;
     property  Align;
     property  BevelInner default bvNone;
     property  BevelOuter default bvLowered;
@@ -177,31 +199,28 @@ type
     property  OnKeyUp;
   end;
 
-procedure Register;
-
 implementation
 
-procedure Register;
-begin
-//  RegisterComponents('Extensions', [TPropEdit]);
-end;
 
 constructor TPropEdit.Create(AOwner:TComponent);
-//----------------------------------------------
+//-----------------------------------------------------------------------------
 // Component constructor
-//----------------------------------------------
+//-----------------------------------------------------------------------------
 begin
   inherited Create(AOwner);
   Width := 100;
   Height := 100;
   BevelInner := bvNone;
-  BevelOuter := bvLowered;
+  BevelOuter := bvNone;
+  BevelKind := bkNone;
   BevelWidth := 1;
-  BorderStyle := bsNone;
+  BorderStyle := bsNone; // bsSingle;
   BorderWidth := 0;
-  Ctl3D := True;
+  Ctl3D := False; //True;
   ReadOnlyColor := $0080FFFF;
   ValueColor := clNavy;
+  HeadBackColor := clBtnFace;
+  HeadForeColor := clBlack;
   ColHeading1 := 'Property';
   ColHeading2 := 'Value';
   FHeaderSplit := 50;
@@ -210,14 +229,13 @@ begin
   ButtonPressed := False;
   ButtonVisible := False;
   ComponentsCreated := False;
-  DecimalChar := DecimalSeparator;
 end;
 
+
 destructor TPropEdit.Destroy;
-//-----------------------------------------------
-// Component destructor. Must free sub-components
-// in the order listed.
-//-----------------------------------------------
+//-----------------------------------------------------------------------------
+// Component destructor. The sub-components must be freed in the order listed.
+//-----------------------------------------------------------------------------
 begin
   if ComponentsCreated then
   begin
@@ -230,14 +248,14 @@ begin
   inherited Destroy;
 end;
 
+
 procedure TPropEdit.CreateComponents;
-//-------------------------------------
-// Creates sub-components that populate
-// the main component.
-//-------------------------------------
+//-----------------------------------------------------------------------------
+// Creates the sub-components that populate the PropEdit component.
+//-----------------------------------------------------------------------------
 begin
 
-// FHeader displays column labels
+  // FHeader displays column labels
   FHeader := THeader.Create(self);
   FHeader.Parent := self;
   with FHeader do
@@ -248,17 +266,18 @@ begin
     OnSized := ResizeSection;
   end;
 
-// FGrid displays properties & values
+  // FGrid displays properties & values
   FGrid := TStringGrid.Create(self);
   FGrid.Parent := self;
   with FGrid do
   begin
     Align := alClient;
-    BorderStyle := bsNone;
+    BorderStyle := bsSingle;
     ColCount := 2;
     Ctl3D := False;
-    Color := clBtnFace;
-    Options := Options - [goRangeSelect];
+    Color := clWindow;  //clBtnFace;
+    Options := Options - [goRangeSelect] + [goThumbTracking];
+    DrawingStyle := gdsClassic;
     FixedCols := 0;
     FixedRows := 0;
     RowCount := 1;
@@ -271,46 +290,55 @@ begin
     OnMouseUp := GridMouseUp;
     OnDrawCell := GridDrawCell;
     OnTopLeftChanged := GridTopLeftChanged;
+    OnSelectCell := GridSelectCell;
   end;
 
-//Create the edit & combobox controls last so that
-//they can appear in front of the grid when activated.
+  // Create the edit & combobox controls last so that
+  // they can appear in front of the grid when activated.
 
-// FEdit is used to edit numbers and strings
+  // FEdit is used to edit numbers and strings
   FEdit := TEdit.Create(self);
   with FEdit do
   begin
     Parent := self;
-    Ctl3D := True;
+    Ctl3D := False;
     BorderStyle := bsSingle;
+    BevelKind := bkNone;
     AutoSelect := True;
     Visible := False;
     OnKeyPress := EditKeyPress;
     OnKeyDown := EditKeyDown;
-    OnChange := EditChange;
+
+    //OnChange := EditChange;
+
   end;
 
-// FCombo is used to edit choices
+  // FCombo is used to edit choices
   FCombo := TComboBox.Create(self);
   with FCombo do
   begin
     Parent := self;
-    Ctl3D := True;
+    Ctl3D := False;
+    BevelKind := bkNone;
     Style := csDropDown;
     Visible := False;
     OnKeyPress := EditKeyPress;
     OnKeyDown := EditKeyDown;
+    OnChange := ComboChange;
+    OnDblClick := ComboDblClick;
   end;
 
   RowHeight := FCombo.Height;
   FGrid.DefaultRowHeight := RowHeight;
+  FEdit.Height := RowHeight;
   ComponentsCreated := True;
   Resize;
 end;
 
-//========================================================
-// Property Servers
-//========================================================
+
+//============================================================================
+//                       Property Servers
+//============================================================================
 
 procedure TPropEdit.SetReadOnlyColor(Value: TColor);
 begin
@@ -320,6 +348,16 @@ end;
 procedure TPropEdit.SetValueColor(Value: TColor);
 begin
   if FValueColor <> Value then FValueColor := Value;
+end;
+
+procedure TPropEdit.SetHeadBackColor(Value: TColor);
+begin
+  if FHeadBackColor <> Value then FHeadBackColor := Value;
+end;
+
+procedure TPropEdit.SetHeadForeColor(Value: TColor);
+begin
+  if FHeadForeColor <> Value then FHeadForeColor := Value;
 end;
 
 procedure TPropEdit.SetColHeading1(Value: String);
@@ -375,9 +413,10 @@ begin
   if (FEdit.Visible) then Result := GoValidate(FEdit.Text);
 end;
 
-//========================================================
-// Re-sizing procedures
-//========================================================
+
+//=============================================================================
+//                         Re-sizing procedures
+//=============================================================================
 
 procedure TPropEdit.Resize;
 var
@@ -387,7 +426,7 @@ begin
   if ComponentsCreated then
   begin
 
-  //Initialize Header sections
+    //Initialize Header sections
     with FHeader do
     begin
       Height := RowHeight;
@@ -399,7 +438,7 @@ begin
       end;
     end;
 
-  //Resize Grid & reposition active edit control
+    //Resize Grid & reposition active edit control
     if (FEdit.Visible) then EditExit(FEdit);
     if (FCombo.Visible) then EditExit(FCombo);
     ResizeGrid(Self);
@@ -408,64 +447,63 @@ begin
   end;
 end;
 
+
 procedure TPropEdit.ResizeSection(Sender: TObject; aSection, aWidth: Integer);
 begin
-// Save new HeaderSplit value
+  // Save new HeaderSplit value
   FHeaderSplit := (FHeader.SectionWidth[0]*100)  div FHeader.Width;
 
   //Resize Grid column widths
   FGrid.ColWidths[0] := FHeader.SectionWidth[0];
   FGrid.ColWidths[1] := FHeader.SectionWidth[1] - CXVScroll -1;
 
-//Resize active edit control
+  //Resize active edit control
   if (FEdit.Visible) then SetEditBounds(FEdit);
   if (FCombo.Visible) then SetEditBounds(FCombo);
 end;
 
+
 procedure TPropEdit.ResizeGrid(Sender: TObject);
 begin
-
   VisibleRows := (ClientHeight - FHeader.Height) div
-                   (RowHeight + 1);
+                  (RowHeight + 1);
   with FGrid do
   begin
 
-  //Determine number of visible rows
+    //Determine number of visible rows
     DefaultRowheight := RowHeight;
     if VisibleRows > RowCount then VisibleRows := RowCount;
     Height := VisibleRows*(RowHeight + 1);
 
-  //Save width of scrollbar if one is needed
+    //Save width of scrollbar if one is needed
     if VisibleRows < RowCount then
       CXVScroll := GetSystemMetrics(SM_CXVSCROLL)
     else
       CXVScroll := 0;
 
-  //Establish column widths
+    //Establish column widths
     DefaultColWidth := (ClientWidth - CXVScroll - 2) div 2;
     if FHeader.SectionWidth[0] < ClientWidth then
     begin
       ColWidths[0] := FHeader.SectionWidth[0];
-      ColWidths[1] := FHeader.SectionWidth[1] - CXVScroll -1;
+      ColWidths[1] := ClientWidth - ColWidths[0] - 1;
     end
     else FHeader.SectionWidth[0] := DefaultColWidth;
   end;
-
 end;
 
-//========================================================
-// Editor control event handlers
-//========================================================
+
+//=============================================================================
+//                    Edit Controls Event Handlers
+//=============================================================================
 
 procedure TPropEdit.EditKeyPress(Sender: TObject; var Key: Char);
-//---------------------------------------------------------
-// Processes Enter & Escape key presses in editing control.
-//---------------------------------------------------------
-
-{*** Updated 12/6/01 ***}
+//-----------------------------------------------------------------------------
+// OnKeyPress event handler for the edit and combo box controls.
+//-----------------------------------------------------------------------------
 var
   S: String;
-
+  X: Extended;
 begin
   if Key = #13 then   {Enter key}
   begin
@@ -474,37 +512,48 @@ begin
     EditExit(Sender);
     Key := #0;
   end
+
   else if Key = #27 then   {Escape key}
   begin
     with Sender as TwinControl do Visible := False;
     FGrid.SetFocus;
     Key := #0;
   end
-  else if (Sender = FEdit) then
-  begin
-    if (EditMask in [emNumber, emPosNumber]) then with Sender as TEdit do
 
-{*** Updated 12/6/01 ***}
+  else if (Sender = FEdit) then with Sender as TEdit do
+  begin
+    // Allow backspace key press
+    if Key = #8 then Exit;
+
+    // If a number is required
+    if (EditMask in [emNumber, emPosNumber]) then
     begin
-      if not (Key in ['0'..'9','-',DecimalChar,#8]) then Key := #0
-      else
-      begin
-        S := Text;
-        Delete(S, SelStart+1, SelLength);
-        if EditMask = emPosNumber then
-        begin
-          if Key = '-' then Key := #0;
-          if (Key = DecimalChar) and (Pos(Key,S) > 0) then Key := #0;
-        end
-        else
-          if (Key in [DecimalChar,'-']) and (Pos(Key,S) > 0) then Key := #0;
+
+      // Insert the key character into the current text
+      S := Text;
+      Delete(S, SelStart+1, SelLength);
+      Insert(Key, S, SelStart+1);
+
+      // Add a 0 to complete a partial numeric entry
+      S := S + '0';
+
+      // Check that this creates a valid number
+      try
+        X := StrToFloat(S);
+
+        // Check if a positive number is required
+        if (EditMask = emPosNumber) and (X < 0.0) then Key := #0;
+
+      // Ignore the key if we don't have a valid number
+      except
+        on EConvertError do Key := #0;
       end;
     end
-{***********************}
 
-    else if (EditMask = emNoSpace) then with Sender as TEdit do
+    // For the NoSpace style, ignore spaces, double quotes & semicolons
+    else if (EditMask = emNoSpace) then
     begin
-      if (Key = ' ') then Key := #0;
+      if CharInSet(Key, [' ', '"', ';']) then Key := #0;
     end;
   end;
 end;
@@ -512,10 +561,9 @@ end;
 
 procedure TPropEdit.EditKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
-//-------------------------------------------------------
-// Processes Up & Down arrow key presses and
-// Page Up & Page Down key presses in edit control.
-//-------------------------------------------------------
+//-----------------------------------------------------------------------------
+// OnKeyDown event handler for the edit and combo box controls.
+//-----------------------------------------------------------------------------
 begin
   if Key in [VK_UP,VK_DOWN,VK_PRIOR,VK_NEXT] then
   begin
@@ -526,13 +574,17 @@ begin
   { Pass keystroke onto Grid }
     SendMessage(FGrid.Handle,WM_KEYDOWN,Key,0);
   end;
+  if (Sender = FCombo) and (Key = VK_RETURN) and (ssCtrl in Shift) then
+    ComboDblClick(Sender);
+  if Key = VK_F1 then SendMessage(FGrid.Handle,WM_KEYDOWN,Key,0);
 end;
 
+{
 procedure TPropEdit.EditChange(Sender: TObject);
-//-----------------------------------------------
-// OnChange handler for Edit control.
-// Prevents mis-placed negative sign in numbers.
-//-----------------------------------------------
+//-----------------------------------------------------------------------------
+// OnChange event handler for the Edit control. Prevents mis-placed
+// negative sign in numbers.
+//-----------------------------------------------------------------------------
 var
   idx: Integer;
   bsp: String;
@@ -550,16 +602,17 @@ begin
     end;
   end;
 end;
+}
 
 procedure TPropEdit.EditExit(Sender: TObject);
-//-------------------------------------------
-// OnExit handler for editor controls
-//-------------------------------------------
+//-----------------------------------------------------------------------------
+// OnExit event handler for the edit and combo box controls.
+//-----------------------------------------------------------------------------
 var
   S : String;
   C: TWinControl;
 begin
-// Extract text from active edit control
+  // Extract text from the active edit control
   C := TWinControl(Sender);
   if C.Visible then
   begin
@@ -569,131 +622,189 @@ begin
       S := Trim(FCombo.Text)
     else S := FGrid.Cells[1,FRow];
 
-// Validate text if it has changed
+    // Validate text if it has changed
     GoValidate(S);
 
-// Return focus to grid control
+    // Return focus to grid control
     C.Visible := False;
     FGrid.SetFocus;
   end;
 end;
 
+
+procedure TPropEdit.ComboDblClick(Sender: TObject);
+//-----------------------------------------------------------------------------
+// OnDblClick event handler for the combo box control. Allows a special
+// editor (or other procedure) to be launched when a combo box field
+// is double clicked.
+//-----------------------------------------------------------------------------
+var
+  S: String;
+begin
+  if Assigned(FOnButtonClick) then
+  begin
+    S := FCombo.Text;
+    FOnButtonClick(self, FRow);
+    FCombo.Text := S;
+    EditExit(Sender);
+  end;
+end;
+
+
+procedure TPropEdit.ComboChange(Sender: TObject);
+//-----------------------------------------------------------------------------
+// OnChange event handler for the combo box control.
+//-----------------------------------------------------------------------------
+begin
+  if FCombo.Visible then GoValidate(Trim(FCombo.Text));
+end;
+
+
+procedure TPropEdit.GoButtonClick(aRow: Integer);
+//-----------------------------------------------------------------------------
+// Calls the OnButtonClick event procedure.
+//-----------------------------------------------------------------------------
+var
+  S: String;
+begin
+  if Assigned(FOnButtonClick) then
+  begin
+    S := FGrid.Cells[1, aRow];
+    FOnButtonClick(self, aRow);
+    GoValidate(S);
+  end;
+end;
+
+
 function TPropEdit.GoValidate(S: String): Boolean;
-//------------------------------------------------
-// Validates edited property value and updates
-// the value if its valid. S is a string holding
-// the newly edited value.
-//------------------------------------------------
+//-----------------------------------------------------------------------------
+// Validates an edited property value and updates the value if its valid.
+// S is a string holding the newly edited value.
+//-----------------------------------------------------------------------------
 var
   IsValid: Boolean;
   Errmsg:  String;
 begin
-// Check if S is different from current value
-    IsValid := True;
-    if (S <> FGrid.Cells[1,FRow]) then
-    try
+  // Check if S is different from current value
+  IsValid := True;
+  if (S <> FGrid.Cells[1,FRow]) then
+  try
 
-    // Call validation procedure if it exists
-      if (Assigned(FOnValidate)) then
-        FOnValidate(self,FRow,S,Errmsg,IsValid);
+    // Call the validation procedure if it exists
+    if (Assigned(FOnValidate)) then
+      FOnValidate(self,FRow,S,Errmsg,IsValid);
 
-    // If new value is valid then update the StrinGrid display
+    // If the new value is valid then update the StringGrid display
     // and the StringList that holds the property values
-      if (IsValid) then
-      begin
-        FGrid.Cells[1,FRow] := S;
-        FValues[FRow] := S;
-        FModified := True;
-      end
+    if (IsValid) then
+    begin
+      FGrid.Cells[1,FRow] := S;
+      FValues[FRow] := S;
+      FModified := True;
+    end
 
-    // If not valid then raise exception
-      else raise EInvalidProperty.Create('Invalid Property Value');
+    // If not valid then raise an exception
+    else raise EInvalidProperty.Create('Invalid Property Value');
 
-    except
-      on E:EInvalidProperty do
-      begin
-        if Length(Errmsg) = 0 then Errmsg := E.Message;
-        MessageDlg(Errmsg, mtError, [mbOK], 0);
-      end;
+////  Modified for version 1.3.
+  except
+    // Specific error messages should be displayed in FOnValidate
+    on E:EInvalidProperty do
+    begin
+      if Length(Errmsg) = 0 then
+        MessageDlg(E.Message, mtError, [mbOK], 0);
     end;
-    Result := IsValid;
+  end;
+  Result := IsValid;
 end;
 
-//========================================================
-// StringGrid event handlers
-//========================================================
+
+//=============================================================================
+//                      StringGrid Event Handlers
+//=============================================================================
+
+procedure TPropEdit.GridSelectCell(Sender: TObject; ACol, ARow: Longint;
+  var CanSelect: Boolean);
+//-----------------------------------------------------------------------------
+// OnSelectCell event handler for grid control.
+//-----------------------------------------------------------------------------
+begin
+  if (Assigned(FOnRowSelect)) then FOnRowSelect(self, ARow);
+  CanSelect := True;
+end;
+
 
 procedure TPropEdit.GridClick(Sender: TObject);
-//---------------------------------------------
-// OnClick handler for grid control
-//---------------------------------------------
+//-----------------------------------------------------------------------------
+// OnClick event handler for grid control.
+//-----------------------------------------------------------------------------
 begin
-// Exit any active edit control
+  // Exit any active edit control
   if (FEdit.Visible) then EditExit(FEdit);
   if (FCombo.Visible) then EditExit(FCombo);
 
-// Prevent selection of cell in column 0
+  // Prevent selection of cell in column 0
   with FGrid do
   begin
     if Col = 0 then Col := 1;   { Can't select column 0 }
     FRow := Row;                { Save current row value }
   end;
 
-// Set button status if row's edit style is Ellipsis
+  // Set button status if row's edit style is esButton
   if (FProps^[FRow].Style = esButton) then
     ButtonVisible := True
   else
     ButtonVisible := False;
 end;
 
+
 procedure TPropEdit.GridKeyPress(Sender: TObject; var Key: Char);
-//------------------------------------
-// OnKeyPress handler for grid
-//------------------------------------
+//-----------------------------------------------------------------------------
+// OnKeyPress event handler for the grid control.
+//-----------------------------------------------------------------------------
 begin
   if FGrid.Col <> 1 then Exit;
-  if (Key = #13) or (Key in [#43..#122]) then
+  if (Key = #13) or CharInSet(Key, [#43..#122]) then
   begin
     with FGrid do EditProperty(Col,Row,Key);
   end;
 end;
 
+
 procedure TPropEdit.GridKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
-//------------------------------------
-// OnKeyDown handler for grid
-//------------------------------------
+//-----------------------------------------------------------------------------
+// OnKeyDown event handler for the grid control.
+//-----------------------------------------------------------------------------
 var
   aRow: LongInt;
 begin
+  // Identify the current row
   aRow := FGrid.Row;
-// Fire OnButtonClick event if Enter pressed
-// for a row whose edit style is esButton
-  if (Key = VK_RETURN) and
-     (FProps^[aRow].Style = esButton) then
-  try
-    if (Assigned(FOnButtonClick)) then
-      FOnButtonClick(self,aRow);
-  except;
-  end
 
-// Let the grid process the Up & Down Arrow key press
+  // Fire the OnButtonClick event if Enter was pressed for a row
+  // whose edit style is esButton
+  if (Key = VK_RETURN)
+  and (FProps^[aRow].Style = esButton)
+  then GoButtonClick(aRow)
+
+  // Let the grid process the Up & Down Arrow key press
   else if Key in [VK_UP, VK_DOWN] then exit
 
-// Pass all other keys to the parent form
-  else 
+  // Pass all other keys to the parent form
+  else
   begin
     SendMessage(Parent.Handle,WM_KEYDOWN,Key,0);
     Key := 0;
   end;
-
 end;
+
 
 procedure TPropEdit.GridMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
-//--------------------------------------
-// OnMouseDown handler for grid
-//--------------------------------------
+//-----------------------------------------------------------------------------
+// OnMouseDown event handler for the grid control.
+//-----------------------------------------------------------------------------
 var
   aCol,aRow: LongInt;
   W: Integer;
@@ -703,34 +814,30 @@ begin
   begin
     MouseToCell(X,Y,aCol,aRow);
 
-// If   current row's edit style is esButton,
-// and  button is visible,
-// and  mouse is over the button,
-// then re-draw button in pressed state.
-    if (aCol = 1) and (aRow = Row) and
-     (FProps^[aRow].Style = esButton) and
-     (ButtonVisible) then
+    // If   current row's edit style is esButton, and  button is visible,
+    // and  mouse is over the button, then re-draw button in pressed state.
+    if  (aCol = 1) and (aRow = Row)
+    and (FProps^[aRow].Style = esButton)
+    and (ButtonVisible) then
     begin
-
       aRect := CellRect(aCol,aRow);
       W := aRect.Bottom - aRect.Top;
-      SetRect(R, aRect.Right - W, aRect.Top,
-        aRect.Right, aRect.Bottom);
+      SetRect(R, aRect.Right - W, aRect.Top, aRect.Right, aRect.Bottom);
       if PtInRect(R, Point(X,Y)) then
       begin
         ButtonPressed := True;
         DrawButton(Canvas, aRect);
       end;
-
     end;
   end;
 end;
 
+
 procedure TPropEdit.GridMouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-//-------------------------------------
-// OnMouseUp handler for grid
-//-------------------------------------
+  Shift: TShiftState; X, Y: Integer);
+//-----------------------------------------------------------------------------
+// OnMouseUp event handler for the grid control.
+//-----------------------------------------------------------------------------
 var
   aCol,aRow: LongInt;
   aRect: TRect;
@@ -739,9 +846,9 @@ begin
   begin
     MouseToCell(X,Y,aCol,aRow);
     if (aCol = 0) then aCol := 1;
-// If button is pressed and current row's
-// edit style is esButton then redraw button in unpressed
-// state and fire the OnButtonClick event.
+
+    // If button is pressed and current row's edit style is esButton
+    // then redraw button in unpressed state and fire the OnButtonClick event.
     if (ButtonPressed) then
     begin
       if (FProps^[aRow].Style = esButton) then
@@ -749,11 +856,7 @@ begin
         aRect := CellRect(1,aRow);
         ButtonPressed := not ButtonPressed;
         DrawButton(Canvas, aRect);
-        try
-          if (Assigned(FOnButtonClick)) then
-            FOnButtonClick(self,aRow);
-        except;
-        end;
+        GoButtonClick(aRow);
       end
       else
       begin
@@ -764,36 +867,56 @@ begin
   EditProperty(1,FGrid.Row,#13);
 end;
 
+
 procedure TPropEdit.GridTopLeftChanged(Sender: TObject);
-//-----------------------------------------
-// OnTopLeftChanged event for grid control
-//-----------------------------------------
+//-----------------------------------------------------------------------------
+// OnTopLeftChanged event handler for the grid control.
+//-----------------------------------------------------------------------------
 begin
   FEdit.Visible := False;
   FCombo.Visible := False;
   FGrid.SetFocus;
 end;
 
+
 procedure TPropEdit.GridDrawCell(Sender: TObject; vCol,
   vRow: Longint; Rect: TRect; State: TGridDrawState);
-//---------------------------------------------------
-// OnDrawCell handler for grid
-//---------------------------------------------------
+//-----------------------------------------------------------------------------
+// OnDrawCell event handler for the grid control.
+//-----------------------------------------------------------------------------
 begin
   if (FProps = nil) then Exit;
-  if vcol = 0 then Exit;
+  Rect.Left := Rect.Left - 4;
   with Sender as TStringGrid do
   begin
     with Canvas do
     begin
 
-      if (FProps^[vRow].Style = esReadOnly) then
+      if vCol = 0 then
+      begin
+        if (FProps^[vRow].Style = esHeading) then
+        begin
+          Brush.Color := HeadBackColor;
+          Font.Color := FHeadForeColor;
+        end
+        else Brush.Color := Color;
+        FillRect(Rect);
+        SetBkMode(Handle,TRANSPARENT);
+        TextOut(Rect.Left+2,Rect.Top+2,Cells[vCol,vRow]);
+        exit;
+      end;
+
+      if FProps^[vRow].Style = esHeading then
+      begin
+        Brush.Color := FHeadBackColor;
+        Font.Color := FHeadForeColor;
+      end
+      else if (FProps^[vRow].Style = esReadOnly) then
       begin
         Brush.Color := FReadOnlyColor;
         Font.Color := FValueColor;
       end
-      else
-      if (gdSelected in State) then
+      else if (gdSelected in State) then
       begin
         Brush.Color := clWhite;
         Font.Color := clBlack;
@@ -801,7 +924,7 @@ begin
       else Font.Color := FValueColor;
       FillRect(Rect);
       SetBkMode(Handle,TRANSPARENT);
-      TextOut(Rect.Left+3,Rect.Top+3,Cells[vCol,vRow]);
+      TextOut(Rect.Left+2,Rect.Top+2,Cells[vCol,vRow]);
       if (gdSelected in State) and
          (FProps^[vRow].Style = esButton) then
         DrawButton(Canvas,Rect);
@@ -809,13 +932,13 @@ begin
   end;
 end;
 
+
 procedure TPropEdit.DrawButton(aCanvas: TCanvas; aRect: TRect);
-//-------------------------------------------------------
-// Draws button in cell with esButton edit style
-//-------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Draws button in the cell of the grid control.
+//-----------------------------------------------------------------------------
 var
   Flags: Integer;
-  Width, Height: Integer;
   W, H: Integer;
   R: TRect;
 begin
@@ -825,7 +948,7 @@ begin
     Width := Right - Left;
     W := Height;
     H := Height div 2;
-    SetRect(R, Left + Width - W, Top+1, Left + Width-2, Top + Height-2);
+    SetRect(R, Left + Width - W, Top+1, Left + Width-1, Top + Height-1);
   end;
   Flags := 0;
   if ButtonPressed then Flags := BF_FLAT;
@@ -837,38 +960,65 @@ begin
   ButtonVisible := True;
 end;
 
-procedure TPropEdit.EditProperty(CurCol, CurRow: LongInt; Key: Char);
-//------------------------------------------------------------
-// Activates the appropriate editor for the current grid cell
-//------------------------------------------------------------
+
+//=============================================================================
+//                         General Procedures
+//=============================================================================
+
+procedure TPropEdit.SetDropDownWidth;
+//-----------------------------------------------------------------------------
+// Sets the width of the dropdown list box associated with the combo control.
+//-----------------------------------------------------------------------------
+var
+  I, ItemWidth, MaxWidth: Integer;
 begin
-// No editor used for following conditions
+  MaxWidth := 0;
+  with FCombo do
+  begin
+    for I := 0 to Items.Count-1 do
+    begin
+      ItemWidth := FGrid.Canvas.TextWidth(Items[I]);
+      if ItemWidth > MaxWidth then MaxWidth := ItemWidth;
+    end;
+    MaxWidth := MaxWidth + 10;
+    if MaxWidth > Fgrid.ClientWidth then MaxWidth := Fgrid.ClientWidth;
+    Perform(CB_SETDROPPEDWIDTH, MaxWidth, 0);
+  end;
+end;
+
+
+procedure TPropEdit.EditProperty(CurCol, CurRow: LongInt; Key: Char);
+//-----------------------------------------------------------------------------
+// Activates the appropriate editor for the current grid cell.
+//-----------------------------------------------------------------------------
+begin
+  // No editor used for following conditions
   if CurCol <> 1 then Exit;
   if CurRow <> FGrid.Row then Exit;
   if FProps^[CurRow].Style = esReadOnly then Exit;
   if FProps^[CurRow].Style = esButton then Exit;
 
-// Activate the single line text edit control
+  // Activate the single line text edit control
   if (FProps^[CurRow].Style = esEdit) then
   begin
 
-  // Determine max. length and edit mask
+    // Determine max. length and edit mask
     FEdit.MaxLength := FProps^[CurRow].Length;
     EditMask := FProps^[CurRow].Mask;
 
-  // Place property value in edit control
+    // Place property value in edit control
     if (Key = #13) then
       FEdit.Text := FGrid.Cells[1,CurRow]
     else
       FEdit.Text := '';
 
-  // Activate the control
+    // Activate the control
     SetEditBounds(TwinControl(FEdit));
     if (Key <> #13) then
       PostMessage(FEdit.Handle,WM_KeyDown,VkKeyScan(Key),0);
   end
 
-// Activate the combobox edit control
+  // Activate the combo box edit control
   else if (FProps^[CurRow].Style in [esComboList, esComboEdit]) then
   with FCombo do
   begin
@@ -876,7 +1026,7 @@ begin
     Items.SetText(PChar(FProps^[CurRow].List));
     if FProps^[CurRow].Style = esComboList then
     begin
-      Style := csDropDownList;
+      Style := csOwnerDrawFixed; //csDropDownList;
       ItemIndex := Items.IndexOf(FGrid.Cells[1,CurRow]);
     end
     else
@@ -885,13 +1035,15 @@ begin
       Text := FGrid.Cells[1,CurRow];
     end;
     SetEditBounds(TwinControl(FCombo));
+    SetDropDownWidth;
   end;
 end;
 
+
 procedure TPropEdit.SetEditBounds(aControl : TWinControl);
-//-----------------------------------------
-// Sets bounds on active edit control
-//-----------------------------------------
+//-----------------------------------------------------------------------------
+// Sets the bounds on the active edit control.
+//-----------------------------------------------------------------------------
 var
   aRect : TRect;
 begin
@@ -910,32 +1062,64 @@ begin
   end;
 end;
 
+
+procedure TPropEdit.SetProp(Index: Integer; Value: String);
+//-----------------------------------------------------------------------------
+// Assigns Value to the property in row Index of the editor.
+//-----------------------------------------------------------------------------
+begin
+  with FGrid do
+  begin
+    if (Index >= 0) and (Index < RowCount) and (Fvalues <> nil) then
+    begin
+      Cells[1,Index] := Value;
+      FValues[Index] := Value;
+    end;
+  end;
+end;
+
+
+function  TPropEdit.GetProp(Index: Integer): String;
+//-----------------------------------------------------------------------------
+// Retrieves the string value of the property in row Index of the editor.
+//-----------------------------------------------------------------------------
+begin
+  if (Fvalues <> nil) and (Index < FValues.Count) then
+    Result := Fvalues[Index]
+  else
+    Result := '';
+end;
+
+
 procedure TPropEdit.SetProps(var PropArray: array of TPropRecord;
   Values: TStrings);
-//------------------------------------------------------------
-// Updates the property editor with a new set of properties
-//------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Updates the property editor with a new set of properties.
+//-----------------------------------------------------------------------------
 var
   i,j: Integer;
 begin
-// If editing components have not been created then create them
+  // If editing components have not been created then create them
   if not ComponentsCreated then CreateComponents;
 
-// Initialize status of editor
+  // Initialize status of editor
   FEdit.Visible := False;
   FCombo.Visible := False;
   ButtonPressed := False;
   ButtonVisible := False;
   FModified := False;
 
-// Assign pointers to the property array & initial values
+  // Assign pointers to the property array & initial values
   FProps := @PropArray;
   FValues := Values;
 
-// Re-size the editor's grid and populate its cells
+  // Re-size the editor's grid and populate its cells
   with FGrid do
   begin
-    RowCount := high(PropArray) - low(PropArray) + 1;
+{*** Changed for v1.4 ***}
+//  RowCount := high(PropArray) - low(PropArray) + 1;
+    RowCount := Values.Count;
+
     ResizeGrid(self);
     for i := 0 to RowCount - 1 do
     begin
@@ -944,23 +1128,33 @@ begin
     end;
     Cols[1].Assign(Values);
     Col := 1;
-    if FRow >= RowCount then Frow := 0;
+    if FRow >= RowCount then FRow := 0;
     Row := FRow;
+  end;
+
+  // Call OnRowSelect handler
+  if (Assigned(FOnRowSelect)) then FOnRowSelect(self, FRow);
+end;
+
+
+procedure TPropEdit.Edit;
+//-----------------------------------------------------------------------------
+// Activates the Property Editor.
+//-----------------------------------------------------------------------------
+begin
+  if Parent.Visible then
+  begin
+    FEdit.Visible := False;
+    FCombo.Visible := False;
+    FGrid.SetFocus;
   end;
 end;
 
-procedure TPropEdit.Edit;
-//-------------------------------
-// Activates the Property Editor.
-//-------------------------------
-begin
-  if Parent.Visible then FGrid.SetFocus;
-end;
 
 procedure TPropEdit.GetProps(Plist, Vlist: TStringlist);
-//----------------------------------------------------
+//-----------------------------------------------------------------------------
 // Retrieves property names & values from the Editor.
-//----------------------------------------------------
+//-----------------------------------------------------------------------------
 begin
   Plist.Assign(FGrid.Cols[0]);  //List of property names
   Vlist.Assign(Fgrid.Cols[1]);  //List of property values

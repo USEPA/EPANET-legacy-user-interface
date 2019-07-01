@@ -13,7 +13,9 @@ unit Ureport;
 
 interface
 
-uses Forms, Controls, Messages, SysUtils, Dialogs, Uutils, Uglobals;
+uses
+  Forms, Controls, Messages, SysUtils, Dialogs, System.UITypes,
+  Uutils, Uglobals;
 
 procedure CreateFullReport;
 
@@ -394,8 +396,8 @@ begin
 // Check for huge file size
   Size := (Nlinks + (Nnodes + Nlinks)*Nperiods)*60*1e-6;
   if Size > 10 then
-    if MessageDlg(MSG_REPORT_SIZE1 + IntToStr(Trunc(Size)) +
-      MSG_REPORT_SIZE2, mtConfirmation, [mbYes,mbNo], 0) = mrNo
+    if Uutils.MsgDlg(MSG_REPORT_SIZE1 + IntToStr(Trunc(Size)) +
+      MSG_REPORT_SIZE2, mtConfirmation, [mbYes,mbNo], MainForm) = mrNo
         then Exit;
 
 // Get a report file name
@@ -417,8 +419,8 @@ begin
       R := WriteReport(Filename);
       Screen.Cursor := crDefault;
       if not R then
-        MessageDlg(MSG_NO_WRITE + ExtractFileName(Filename),
-          mtError, [mbOK], 0);
+        Uutils.MsgDlg(MSG_NO_WRITE + ExtractFileName(Filename),
+          mtError, [mbOK], MainForm);
     end;
   end;
 end;

@@ -1,23 +1,22 @@
-unit CDForm;
+unit Dchart;
 {
-   Unit:    CDForm.pas
-   Project: TChartDialog Component
+   Unit:    Dchart.pas
+   Project: EPANET4W
    Author:  L. Rossman
-   Version: 3.0
-   Delphi:  7.0
-   Date:    9/30/05
-            6/22/06
+   Version: 1.0
+   Date:    04/30/18
 
-   This is the form unit used for the TChartDialog 
-   dialog box component (ChartDlg.pas).
+   This is dialog form used to set display options for a
+   TChart component.
 }
 
 interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, Buttons, StdCtrls, Spin, ExtCtrls, ComCtrls,
-  Chart, TeEngine, Series;
+  Dialogs, Buttons, StdCtrls, Spin, ExtCtrls, ComCtrls, Math, StrUtils,
+  VCLTee.Chart, VCLTee.TeEngine, VCLTee.Series, VCLTee.TeCanvas,
+  Vcl.Grids, System.UITypes;
 
 const
   LineStyleText: array[0..4] of PChar =
@@ -36,13 +35,21 @@ const
     ('Value','Percent','Label','Label & %','Label & Value','Legend','% Total',
      'Label & % Total','X Value');
 
-  DateFormats: array[0..4] of PChar =
-    ('h:nn', 'h:nn m/d/yy', 'm/d yyyy', 'mmm yyyy', 'yyyy');
-
-
 type
 //Graph series types
   TSeriesType = (stLine, stFastLine, stPoint, stBar, stHorizBar, stArea, stPie);
+
+//Axis types
+  TAxisType = (atX, atY);
+
+//Axis information
+  TAxisInfo = record
+    DataMin: String;
+    DataMax: String;
+    AxisMin: String;
+    AxisMax: String;
+    AxisInc: String;
+  end;
 
 //Graph series options
   TSeriesOptions = class(TObject)
@@ -70,61 +77,51 @@ type
       LabelsStyle     : Integer;
     end;
 
-  TChartOptionsForm = class(TForm)
+  TChartOptionsDlg = class(TForm)
+    DefaultBox: TCheckBox;
+    FontDialog1: TFontDialog;
+    OkBtn: TButton;
+    CancelBtn: TButton;
+    HelpBtn: TButton;
     PageControl1: TPageControl;
     GeneralPage: TTabSheet;
+    XaxisPage: TTabSheet;
+    LegendPage: TTabSheet;
+    StylesPage: TTabSheet;
     Label1: TLabel;
     Label2: TLabel;
-    Label3: TLabel;
     Label4: TLabel;
     Label5: TLabel;
     PanelColorBox: TColorBox;
-    BackColorBox: TColorBox;
+    BackColorBox1: TColorBox;
     View3DBox: TCheckBox;
-    Percent3DBox: TSpinEdit;
     GraphTitleBox: TEdit;
-    GraphTitleFontBtn: TButton;
-    XaxisPage: TTabSheet;
-    Label6: TLabel;
-    Label7: TLabel;
+    Pct3DUpDown: TUpDown;
+    Pct3DEdit: TEdit;
+    XminLabel: TLabel;
+    XmaxLabel: TLabel;
     XIncrementLabel: TLabel;
     Label11: TLabel;
+    XDataMinLabel: TLabel;
+    XDataMaxLabel: TLabel;
     Xmin: TEdit;
     Xmax: TEdit;
     Xinc: TEdit;
-    Xauto: TCheckBox;
     Xtitle: TEdit;
-    XFontBtn: TButton;
-    XDataMinLabel: TLabel;
-    XDataMaxLabel: TLabel;
-    YaxisPage: TTabSheet;
-    Label9: TLabel;
-    Ymin: TEdit;
-    Label12: TLabel;
-    Ymax: TEdit;
-    Label13: TLabel;
-    Yinc: TEdit;
-    Yauto: TCheckBox;
-    Label15: TLabel;
-    Ytitle: TEdit;
-    YFontBtn: TButton;
-    YDataMinLabel: TLabel;
-    YDataMaxLabel: TLabel;
-    LegendPage: TTabSheet;
+    Xgrid: TCheckBox;
     Label18: TLabel;
     Label19: TLabel;
-    Label20: TLabel;
     LegendFrameBox: TCheckBox;
     LegendVisibleBox: TCheckBox;
     LegendPosBox: TComboBox;
     LegendColorBox: TColorBox;
-    LegendWidthBox: TSpinEdit;
-    SeriesPage: TTabSheet;
+    LegendCheckBox: TCheckBox;
+    LegendShadowBox: TCheckBox;
     Label21: TLabel;
     Label22: TLabel;
-    SeriesListBox: TComboBox;
+    SeriesComboBox: TComboBox;
     SeriesTitle: TEdit;
-    LegendFontBtn: TButton;
+    Panel6: TPanel;
     PageControl2: TPageControl;
     LineOptionsSheet: TTabSheet;
     Label23: TLabel;
@@ -132,8 +129,9 @@ type
     Label25: TLabel;
     LineStyleBox: TComboBox;
     LineColorBox: TColorBox;
-    LineSizeBox: TSpinEdit;
     LineVisibleBox: TCheckBox;
+    LineSizeEdit: TEdit;
+    LineSizeUpDown: TUpDown;
     MarkOptionsSheet: TTabSheet;
     Label26: TLabel;
     Label27: TLabel;
@@ -141,68 +139,130 @@ type
     MarkVisibleBox: TCheckBox;
     MarkStyleBox: TComboBox;
     MarkColorBox: TColorBox;
-    MarkSizeBox: TSpinEdit;
+    MarkSizeEdit: TEdit;
+    MarkSizeUpDown: TUpDown;
     AreaOptionsSheet: TTabSheet;
     Label29: TLabel;
-    AreaFillStyleBox: TComboBox;
     Label30: TLabel;
-    AreaColorBox: TColorBox;
     Label31: TLabel;
+    AreaFillStyleBox: TComboBox;
+    AreaColorBox: TColorBox;
     StackStyleBox: TComboBox;
     PieOptionsSheet: TTabSheet;
+    Label32: TLabel;
     PieCircledBox: TCheckBox;
     PiePatternBox: TCheckBox;
-    Label32: TLabel;
-    PieRotationBox: TSpinEdit;
+    PieRotateEdit: TEdit;
+    PieRotateUpDown: TUpDown;
     LabelsOptionsSheet: TTabSheet;
     Label33: TLabel;
-    LabelsStyleBox: TComboBox;
     Label34: TLabel;
+    LabelsStyleBox: TComboBox;
     LabelsBackColorBox: TColorBox;
     LabelsTransparentBox: TCheckBox;
     LabelsArrowsBox: TCheckBox;
     LabelsVisibleBox: TCheckBox;
-    DefaultBox: TCheckBox;
-    BitBtn1: TBitBtn;
-    BitBtn2: TBitBtn;
-    BitBtn3: TBitBtn;
-    ColorBox3: TColorBox;
-    FontDialog1: TFontDialog;
-    Xgrid: TCheckBox;
+    LegendTransparentBox: TCheckBox;
+    Label3: TLabel;
+    GraphTitleFontLabel: TLinkLabel;
+    XaxisFontLabel: TLinkLabel;
+    LegendFontLabel: TLinkLabel;
+    LegendWidthUpDown: TUpDown;
+    LegendWidthEdit: TEdit;
+    YaxisPage: TTabSheet;
+    Label6: TLabel;
+    Label7: TLabel;
+    Label9: TLabel;
+    Ymin: TEdit;
+    Ymax: TEdit;
+    Yinc: TEdit;
+    YDataMaxLabel: TLabel;
+    YDataMinLabel: TLabel;
     Ygrid: TCheckBox;
-    DateFmtCombo: TComboBox;
-    XFormatLabel: TLabel;
+    Label10: TLabel;
+    YaxisFontLabel: TLinkLabel;
+    Ytitle: TEdit;
+    XautoScale: TLinkLabel;
+    YautoScale: TLinkLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure GraphTitleFontBtnClick(Sender: TObject);
-    procedure XFontBtnClick(Sender: TObject);
-    procedure YFontBtnClick(Sender: TObject);
-    procedure LegendFontBtnClick(Sender: TObject);
-    procedure SeriesListBoxClick(Sender: TObject);
-    procedure LineStyleBoxChange(Sender: TObject);
-    procedure BitBtn3Click(Sender: TObject);
+    procedure SeriesComboBoxClick(Sender: TObject);
+    procedure PageControl1Change(Sender: TObject);
+    procedure StylesPageExit(Sender: TObject);
+    procedure HelpBtnClick(Sender: TObject);
+    procedure GraphTitleFontLabelLinkClick(Sender: TObject; const Link: string;
+      LinkType: TSysLinkType);
+    procedure XaxisFontLabelLinkClick(Sender: TObject; const Link: string;
+      LinkType: TSysLinkType);
+    procedure LegendFontLabelLinkClick(Sender: TObject; const Link: string;
+      LinkType: TSysLinkType);
+    procedure YaxisFontLabelLinkClick(Sender: TObject; const Link: string;
+      LinkType: TSysLinkType);
+    procedure XautoScaleLinkClick(Sender: TObject; const Link: string;
+      LinkType: TSysLinkType);
+    procedure YautoScaleLinkClick(Sender: TObject; const Link: string;
+      LinkType: TSysLinkType);
   private
     { Private declarations }
-    theIndex: Integer;
+    SeriesIndex: Integer;
     theSeries: TStringlist;
     IsPieChart: Boolean;
     IsDateTime: Boolean;
-    procedure LoadDateTimeOptions(aChart: TChart);
-    procedure GetSeriesOptions(const Index: Integer);
+    procedure SaveSeriesOptions(const Index: Integer);
     procedure SetSeriesOptions(const Index: Integer);
-    procedure SetAxisScaling(Axis: TChartAxis; const Smin,Smax,Sinc: String);
+    procedure SetAxisScaling(theAxis: TChartAxis; const Smin, Smax, Sinc: String);
+    function  GetAxisValue(S: string): Double;
   public
     { Public declarations }
-    procedure LoadOptions(aChart: TChart);
-    procedure UnloadOptions(aChart: TChart);
+    UseDefaultPanelColor: Boolean;
+    procedure LoadOptions(theChart: TChart);
+    procedure UnloadOptions(theChart: TChart);
   end;
 
-var
-  ChartOptionsForm: TChartOptionsForm;
+procedure Execute(theForm: TForm;
+                  theChart: TChart;
+                  var startPage: Integer;
+                  var default: Boolean);
 
 implementation
 
 {$R *.dfm}
+
+uses Uglobals, Uutils;
+
+{------------------------------------------------------------------------------
+  Procedure called externally to launch the dialog.
+  theForm: the form with the chart on it
+  theChart: the chart whose options are being set
+  startPage: on input the dialog page to display first,
+             on output the page currently displayed
+  default: on input determines if DefaultBox checkbox is visible,
+           on output contains state of DefaultBox checkbox.
+------------------------------------------------------------------------------}
+procedure Execute(theForm: TForm;
+                  theChart: TChart;
+                  var startPage: Integer;
+                  var default: Boolean);
+var
+  ChartOptionsDlg: TChartOptionsDlg;
+begin
+  ChartOptionsDlg := TChartOptionsDlg.Create(theForm);
+  with ChartOptionsDlg do
+  try
+    PageControl1.ActivePageIndex := startPage;
+    DefaultBox.Visible := default;
+    LoadOptions(theChart);
+    if ShowModal = mrOK then
+    begin
+      startPage := PageControl1.ActivePageIndex;
+      UnloadOptions(theChart);
+      default := DefaultBox.Checked;
+    end;
+  finally
+    ChartOptionsDlg.Free;
+  end;
+
+end;
 
 {Constructor for TSeriesOptions}
 Constructor TSeriesOptions.Create;
@@ -210,13 +270,13 @@ begin
   Inherited Create;
 end;
 
-procedure TChartOptionsForm.FormCreate(Sender: TObject);
+{Dialog's Constructor}
+procedure TChartOptionsDlg.FormCreate(Sender: TObject);
 var
   i: Integer;
 begin
-  Font.Size := 8;
-
-{ Load options into comboboxes }
+//  Uglobals.SetFont(self);
+{ Load option choices into comboboxes }
   for i := 0 to High(LineStyleText) do
     LineStyleBox.Items.Add(LineStyleText[i]);
   for i := 0 to High(LegendPosText) do
@@ -229,25 +289,36 @@ begin
     StackStyleBox.Items.Add(StackStyleText[i]);
   for i := 0 to High(LabelStyleText) do
     LabelsStyleBox.Items.Add(LabelStyleText[i]);
-
+  UseDefaultPanelColor := False;
+{
+  PanelColorBox.DefaultColorColor :=
+    Integer(StyleServices.GetStyleColor(scPanel));
+  LegendColorBox.DefaultColorColor := PanelColorBox.DefaultColorColor;
+}
 { Create a stringlist to hold data series options }
   theSeries := TStringlist.Create;
   PageControl1.ActivePage := GeneralPage;
+
 end;
 
-procedure TChartOptionsForm.FormDestroy(Sender: TObject);
+{Dialog's OnDestroy handler.}
+procedure TChartOptionsDlg.FormDestroy(Sender: TObject);
 var
   i: Integer;
 begin
   with theSeries do
   begin
     for i := 0 to Count - 1 do
+      // Free the TSeriesOptions objects created in LoadOptions()
       Objects[i].Free;
     Free;
   end;
 end;
 
-procedure TChartOptionsForm.GraphTitleFontBtnClick(Sender: TObject);
+
+{Change the font used for the chart's title.}
+procedure TChartOptionsDlg.GraphTitleFontLabelLinkClick(Sender: TObject;
+  const Link: string; LinkType: TSysLinkType);
 begin
   with FontDialog1 do
   begin
@@ -256,7 +327,45 @@ begin
   end;
 end;
 
-procedure TChartOptionsForm.XFontBtnClick(Sender: TObject);
+procedure TChartOptionsDlg.XautoScaleLinkClick(Sender: TObject;
+  const Link: string; LinkType: TSysLinkType);
+var
+  XminValue : Double;
+  XmaxValue : Double;
+  XincValue : Double;
+begin
+  XminValue := GetAxisValue(XdataMinLabel.Caption);
+  XmaxValue := GetAxisValue(XdataMaxLabel.Caption);
+  Uutils.AutoScale(XminValue, XmaxValue, XincValue);
+  Xmin.Text := Format('%f', [XminValue]);
+  Xmax.Text := Format('%f', [XmaxValue]);
+  Xinc.Text := Format('%f', [XincValue]);
+end;
+
+procedure TChartOptionsDlg.YautoScaleLinkClick(Sender: TObject;
+  const Link: string; LinkType: TSysLinkType);
+var
+  YminValue : Double;
+  YmaxValue : Double;
+  YincValue : Double;
+begin
+  YminValue := GetAxisValue(YdataMinLabel.Caption);
+  YmaxValue := getAxisValue(YdataMaxLabel.Caption);
+  Uutils.AutoScale(YminValue, YmaxValue, YincValue);
+  Ymin.Text := Format('%f', [YminValue]);
+  Ymax.Text := Format('%f', [YmaxValue]);
+  Yinc.Text := Format('%f', [YincValue]);
+end;
+
+function  TChartOptionsDlg.GetAxisValue(S: string): Double;
+begin
+  S := StrUtils.MidStr(S, 2, S.Length-2);
+  Result := StrToFloat(S);
+end;
+
+{Change the font used for a chart's axis labels.}
+procedure TChartOptionsDlg.XaxisFontLabelLinkClick(Sender: TObject;
+  const Link: string; LinkType: TSysLinkType);
 begin
   with FontDialog1 do
   begin
@@ -269,20 +378,24 @@ begin
   end;
 end;
 
-procedure TChartOptionsForm.YFontBtnClick(Sender: TObject);
+procedure TChartOptionsDlg.YaxisFontLabelLinkClick(Sender: TObject;
+  const Link: string; LinkType: TSysLinkType);
 begin
   with FontDialog1 do
   begin
     Font.Assign(Ytitle.Font);
     if Execute then
     begin
-      Ytitle.Font.Assign(Font);
       Xtitle.Font.Assign(Font);
+      Ytitle.Font.Assign(Font);
     end;
   end;
 end;
 
-procedure TChartOptionsForm.LegendFontBtnClick(Sender: TObject);
+
+{Change the font used for the chart's legend.}
+procedure TChartOptionsDlg.LegendFontLabelLinkClick(Sender: TObject;
+  const Link: string; LinkType: TSysLinkType);
 begin
   with FontDialog1 do
   begin
@@ -291,47 +404,47 @@ begin
   end;
 end;
 
-procedure TChartOptionsForm.BitBtn3Click(Sender: TObject);
-begin
-  if HelpContext > 0 then
-    Application.HelpCommand(HELP_CONTEXT, HelpContext);
-end;
-
-procedure TChartOptionsForm.LineStyleBoxChange(Sender: TObject);
-begin
-  if LineStyleBox.ItemIndex > 0 then
-    LineSizeBox.Value := 1;
-end;
-
-procedure TChartOptionsForm.SeriesListBoxClick(Sender: TObject);
+{OnClick handler for user's choice of a chart series to edit.}
+procedure TChartOptionsDlg.SeriesComboBoxClick(Sender: TObject);
 begin
   if (Sender is TComboBox) then
     with Sender as TComboBox do
     begin
-      GetSeriesOptions(theIndex);  {Store options for current series}
-      theIndex := ItemIndex;       {Update value of current series}
-      SetSeriesOptions(theIndex);  {Load series options into form}
+      SaveSeriesOptions(SeriesIndex); {Store options for current series}
+      SeriesIndex := ItemIndex;       {Update value of current series}
+      SetSeriesOptions(SeriesIndex);  {Load series options into form}
     end;
 end;
 
-procedure TChartOptionsForm.LoadOptions(aChart: TChart);
-{------------------------------------------------------
-  Transfers data from aChart to form.
--------------------------------------------------------}
+{OnExit handler for the dialog's Styles page.}
+procedure TChartOptionsDlg.StylesPageExit(Sender: TObject);
+begin
+  SaveSeriesOptions(SeriesIndex);
+end;
+
+
+{Transfer options from the chart to the dialog.}
+procedure TChartOptionsDlg.LoadOptions(theChart: TChart);
+
 var
   i: Integer;
   s: String;
   SeriesOptions: TSeriesOptions;
 begin
   IsPieChart := False;
-  with aChart do
+  with theChart do
   begin
 
   { General Page }
     View3DBox.Checked := View3D;
-    Percent3DBox.Value := Chart3DPercent;
-    PanelColorBox.Selected := Color;
-    BackColorBox.Selected := BackColor;
+    Pct3DUpDown.Position := Chart3DPercent;
+    with PanelColorBox do
+    begin
+      if theChart.Color = DefaultColorColor then
+        ItemIndex := Items.IndexOf('Default')
+      else Selected := theChart.Color;
+    end;
+    BackColorBox1.Selected := BackColor; //BackWall.Gradient.StartColor;
     GraphTitleBox.Font.Assign(Title.Font);
     if (Title.Text.Count > 0) then
       GraphTitleBox.Text := Title.Text[0];
@@ -346,7 +459,7 @@ begin
       begin
         SeriesOptions := TSeriesOptions.Create;
         s := 'Series' + IntToStr(i+1);
-        SeriesListBox.Items.Add(s);
+        SeriesComboBox.Items.Add(s);
         if Series[i].XValues.DateTime then IsDateTime := True;
 
         with Series[i], SeriesOptions do
@@ -368,8 +481,8 @@ begin
             AreaFillStyle := Ord(LineBrush);
             PointVisible := Pointer.Visible;
             PointStyle := Ord(Pointer.Style);
-            PointColor := Pointer.Brush.Color;
-            PointSize := Pointer.HorizSize;
+            PointColor := ValueColor[0];
+            PointSize := Pointer.VertSize;
           end
         else if Series[i] is TFastLineSeries then
           with Series[i] as TFastLineSeries, SeriesOptions do
@@ -452,36 +565,28 @@ begin
       end;
     end;
 
-  { X Axis Page }
+  { X Axis }
     if IsPieChart then XaxisPage.TabVisible := False
     else
     begin
-      if IsDateTime then LoadDateTimeOptions(aChart) else
-      begin
-        XdataMinLabel.Caption := Format('(%f)',[MinXValue(BottomAxis)]);
-        XdataMaxLabel.Caption := Format('(%f)',[MaxXValue(BottomAxis)]);
-        XFormatLabel.Visible := False;
-        DateFmtCombo.Visible := False;
-        with BottomAxis do
-        begin
-          Xauto.Checked := Automatic;
-          if not Automatic then
-          begin
-            Xmin.Text := Format('%f',[Minimum]);
-            Xmax.Text := Format('%f',[Maximum]);
-            Xinc.Text := Format('%f',[Increment]);
-          end;
-        end;
-      end;
+      XdataMinLabel.Caption := Format('(%f)',[MinXValue(BottomAxis)]);
+      XdataMaxLabel.Caption := Format('(%f)',[MaxXValue(BottomAxis)]);
       with BottomAxis do
       begin
+///////////////        Xauto.Checked := Automatic;
+//////////////        if not Automatic then
+/////////////        begin
+          Xmin.Text := Format('%f',[Minimum]);
+          Xmax.Text := Format('%f',[Maximum]);
+          Xinc.Text := Format('%f',[Increment]);
+/////////////        end;
         Xgrid.Checked := Grid.Visible;
         Xtitle.Font.Assign(Title.Font);
         Xtitle.Text := Title.Caption;
       end;
     end;
 
-  { Y Axis Page }
+  { Y Axis }
     if IsPieChart then YaxisPage.TabVisible := False
     else
     begin
@@ -489,13 +594,9 @@ begin
       YdataMaxLabel.Caption := Format('(%f)',[MaxYValue(LeftAxis)]);
       with LeftAxis do
       begin
-        Yauto.Checked := Automatic;
-        if not Automatic then
-        begin
-          Ymin.Text := Format('%f',[Minimum]);
-          Ymax.Text := Format('%f',[Maximum]);
-          Yinc.Text := Format('%f',[Increment]);
-        end;
+        Ymin.Text := Format('%f',[Minimum]);
+        Ymax.Text := Format('%f',[Maximum]);
+        Yinc.Text := Format('%f',[Increment]);
         Ygrid.Checked := Grid.Visible;
         Ytitle.Font.Assign(Title.Font);
         Ytitle.Text := Title.Caption;
@@ -505,93 +606,64 @@ begin
   { Legend Page }
     LegendPosBox.ItemIndex := Ord(Legend.Alignment);
     LegendColorBox.Selected := Legend.Color;
-    LegendWidthbox.Value := Legend.ColorWidth;
+    LegendCheckBox.Checked := Legend.CheckBoxes;
+    LegendShadowBox.Checked := Legend.Shadow.Visible;
     LegendFrameBox.Checked := Legend.Frame.Visible;
+    LegendTransparentBox.Checked := Legend.Transparent;
     LegendVisibleBox.Checked := Legend.Visible;
+    LegendWidthUpDown.Position := Legend.ColorWidth;
   end;
 
 //Set current series to first series & update dialog entries
-  if aChart.SeriesCount > 0 then
+  if theChart.SeriesCount > 0 then
   begin
+    SeriesIndex := 0;
+    SeriesComboBox.ItemIndex := 0;
     SetSeriesOptions(0);
-    SeriesListBox.ItemIndex := 0;
-    theIndex := 0;
-    SeriesListBoxClick(SeriesListBox);
   end
-  else SeriesPage.TabVisible := False;
+  else StylesPage.TabVisible := False;
 end;
 
-procedure TChartOptionsForm.LoadDateTimeOptions(aChart: TChart);
-{--------------------------------------------------------------
-   Sets up the X Axis page for using Date/Time formats.
----------------------------------------------------------------}
-var
-  i      : Integer;
-  fType  : Integer;
-  s      : String;
-  minDate: TDateTime;
-  maxDate: TDateTime;
+{OnChange handler for the dialog's page control.}
+procedure TChartOptionsDlg.PageControl1Change(Sender: TObject);
 begin
-  XdataMinLabel.Visible := False;
-  XdataMaxLabel.Visible := False;
-  Xmin.Enabled := False;
-  Xmax.Enabled := False;
-  Xinc.Visible := False;
-  XIncrementLabel.Visible := False;
-  XFormatLabel.Top := XIncrementLabel.Top;
-  XFormatLabel.Visible := True;
-  DateFmtCombo.Left := Xinc.Left;
-  DateFmtCombo.Visible := True;
-  Xauto.Checked := True;
-  Xauto.Enabled := False;
-  minDate := aChart.MinXValue(aChart.BottomAxis);
-  DateTimeToString(s, DateFormats[1], minDate);
-  Xmin.Text := s;
-  maxDate := aChart.MaxXValue(aChart.BottomAxis);
-  DateTimeToString(s, DateFormats[1], maxDate);
-  Xmax.Text := s;
-  s := aChart.BottomAxis.DateTimeFormat;
-  fType := 1;
-  for i := 0 to High(DateFormats) do
-    if SameText(s, DateFormats[i]) then fType := i;
-  for i := 0 to High(DateFormats) do
-  begin
-    DateTimeToString(s, DateFormats[i], minDate);
-    DateFmtCombo.Items.Add(s);
-  end;
-  DateFmtCombo.ItemIndex := fType;
+  if PageControl1.ActivePage = StylesPage
+    then SetSeriesOptions(SeriesIndex);
 end;
 
-procedure TChartOptionsForm.UnloadOptions(aChart: TChart);
-{--------------------------------------------------------
-   Transfers data from form back to aChart.
----------------------------------------------------------}
+{Transfer otions from the dialog back to the chart.}
+procedure TChartOptionsDlg.UnloadOptions(theChart: TChart);
 var
   i,j: Integer;
   s  : String;
   SeriesOptions: TSeriesOptions;
 begin
-  with aChart do
+  with theChart do
   begin
 
   { General Page }
+    AutoRepaint := False;
     View3D := View3DBox.Checked;
-    Chart3DPercent := Percent3DBox.Value;
-    BackColor := BackColorBox.Selected;
-    Color := PanelColorBox.Selected;
-    Title.Font.Assign(GraphTitleBox.Font);
+    Chart3DPercent := Pct3DUpDown.Position;
+    Backwall.Color := BackColorBox1.Selected;
+    with PanelColorBox do
+    begin
+      if Items[ItemIndex] = 'Default' then
+      begin
+        theChart.Color := DefaultColorColor;
+        UseDefaultPanelColor := True;
+      end
+      else theChart.Color := Selected;
+    end;
     s := GraphTitleBox.Text;
     Title.Text.Clear;
     if (Length(s) > 0) then Title.Text.Add(s);
+    Title.Font.Assign(GraphTitleBox.Font);
 
   { X Axis Page }
     if not IsPieChart then with BottomAxis do
     begin
-      Automatic := Xauto.Checked;
-      if IsDateTime then
-        DateTimeFormat := DateFormats[DateFmtCombo.ItemIndex]
-      else if not Automatic then
-        SetAxisScaling(BottomAxis,Xmin.Text,Xmax.Text,Xinc.Text);
+      SetAxisScaling(BottomAxis,Xmin.Text,Xmax.Text,Xinc.Text);
       Grid.Visible := Xgrid.Checked;
       Title.Caption := Xtitle.Text;
       Title.Font.Assign(Xtitle.Font);
@@ -601,9 +673,7 @@ begin
   { Y Axis Page }
     if not IsPieChart then with LeftAxis do
     begin
-      Automatic := Yauto.Checked;
-      if not Automatic then
-        SetAxisScaling(LeftAxis,Ymin.Text,Ymax.Text,Yinc.Text);
+      SetAxisScaling(LeftAxis,Ymin.Text,Ymax.Text,Yinc.Text);
       Grid.Visible := Ygrid.Checked;
       Title.Caption := Ytitle.Text;
       Title.Font.Assign(Ytitle.Font);
@@ -612,19 +682,23 @@ begin
 
   { Legend Page }
     Legend.Alignment := TLegendAlignment(LegendPosBox.ItemIndex);
-    Legend.Color := LegendColorBox.Selected;
-    Legend.ColorWidth := LegendWidthBox.Value;
-    if LegendFrameBox.Checked then
-      Legend.Frame.Visible := True
-    else
-      Legend.Frame.Visible := False;
+    with LegendColorBox do
+    begin
+      if Items[ItemIndex] = 'Default' then Legend.Color := DefaultColorColor
+      else Legend.Color := LegendColorBox.Selected;
+    end;
+    Legend.CheckBoxes := LegendCheckBox.Checked;
+    Legend.Shadow.Visible := LegendShadowBox.Checked;
+    Legend.Frame.Visible := LegendFrameBox.Checked;
+    Legend.Transparent := LegendTransparentBox.Checked;
     Legend.Visible := LegendVisibleBox.Checked;
+    Legend.ColorWidth := LegendWidthUpDown.Position;
     Legend.Font.Assign(SeriesTitle.Font);
 
   { Series Page }
     if SeriesCount > 0 then
     begin
-      GetSeriesOptions(theIndex);
+      SaveSeriesOptions(SeriesIndex);
       j := 0;
       for i := 0 to SeriesCount-1 do
       begin
@@ -646,17 +720,13 @@ begin
           with Series[i] as TLineSeries, SeriesOptions do
           begin
             LinePen.Visible := LineVisible;
-            if LinePen.Visible then
-              LinePen.Style := TPenStyle(LineStyle)
-            else
-              LinePen.Style := psClear;
+            LinePen.Style := TPenStyle(LineStyle);
             SeriesColor := LineColor;
             LinePen.Width := LineWidth;
             Pointer.Visible := PointVisible;
             Pointer.Style := TSeriesPointerStyle(PointStyle);
-            Pointer.Brush.Color := PointColor;
-            Pointer.HorizSize := PointSize;
-            Pointer.VertSize := Pointer.HorizSize;
+            Pointer.Color := PointColor;
+            Pointer.Size := PointSize;
             LineBrush := TBrushStyle(AreaFillStyle);
             if (not Pointer.Visible) and (not LinePen.Visible) then
               ShowinLegend := False
@@ -668,16 +738,10 @@ begin
           with Series[i] as TFastLineSeries, SeriesOptions do
           begin
             LinePen.Visible := LineVisible;
-            if LinePen.Visible then
-              LinePen.Style := TPenStyle(LineStyle)
-            else
-              LinePen.Style := psClear;
+            LinePen.Style := TPenStyle(LineStyle);
             SeriesColor := LineColor;
             LinePen.Width := LineWidth;
-            if (not LinePen.Visible) then
-              ShowinLegend := False
-            else
-              ShowinLegend := True;
+            ShowinLegend := LinePen.Visible;
           end;
 
           if Series[i] is TPointSeries then
@@ -686,9 +750,7 @@ begin
             Pointer.Visible := PointVisible;
             Pointer.Style := TSeriesPointerStyle(PointStyle);
             SeriesColor := PointColor;
-            //Pointer.Brush.Color := PointColor;
-            Pointer.HorizSize := PointSize;
-            Pointer.VertSize := Pointer.HorizSize;
+            Pointer.Size := PointSize;
           end
 
           else if Series[i] is TBarSeries then
@@ -738,6 +800,9 @@ begin
             AreaLinesPen.Style := TPenStyle(LineStyle);
             AreaLinesPen.Color := LineColor;
             AreaLinesPen.Width := LineWidth;
+            LinePen.Color := LineColor;
+            LinePen.Width := LineWidth;
+            Pointer.Visible := False;
           end
 
           else if Series[i] is TPieSeries then
@@ -756,20 +821,37 @@ begin
         end;
       end;
     end;
+    AutoRepaint := True;
+    Refresh;
   end;
 end;
 
-procedure TChartOptionsForm.SetAxisScaling(Axis: TChartAxis;
+
+procedure TChartOptionsDlg.SetAxisScaling(theAxis: TChartAxis;
             const Smin,Smax,Sinc: String);
 {-------------------------------------------------
    Retrieves axis scaling options from form.
 --------------------------------------------------}
-var
+{var
   code: Integer;
-  v   : Double;
+  v   : Double;}
+var
+  zMin, zMax, zInc: Double;
 begin
-  with Axis do
+  zMin := StrToFloatDef(Smin, 0);
+  zMax := StrToFloatDef(Smax, 0);
+  zInc := StrToFloatDef(Sinc, 0);
+  if (zMin >= zMax) or (zInc < 0) or (zInc > zMax - zMin) then exit;
+  with theAxis do
   begin
+    Automatic := False;
+    AutomaticMinimum := False;
+    AutomaticMaximum := False;
+    Minimum := zMin;
+    Maximum := zMax;
+    Increment := zInc;
+
+{
     AutomaticMinimum := False;
     Val(Smin,v,code);
     if (code = 0) then
@@ -787,13 +869,13 @@ begin
       Increment := v
     else
       Increment := 0;
+}
   end;
 end;
 
-procedure TChartOptionsForm.SetSeriesOptions(const Index: Integer);
-{------------------------------------------------------
-   Transfer options for data series Index to form.
-------------------------------------------------------}
+
+{Transfer options for a data series to the dialog.}
+procedure TChartOptionsDlg.SetSeriesOptions(const Index: Integer);
 var
   SeriesOptions: TSeriesOptions;
 begin
@@ -803,18 +885,18 @@ begin
   begin
     LineStyleBox.ItemIndex := LineStyle;
     LineColorBox.Selected := LineColor;
-    LineSizeBox.Value := LineWidth;
+    LineSizeUpDown.Position := LineWidth;
     LineVisibleBox.Checked := LineVisible;
     MarkStyleBox.ItemIndex := PointStyle;
     MarkColorBox.Selected := PointColor;
-    MarkSizeBox.Value := PointSize;
+    MarkSizeUpDown.Position := PointSize;
     MarkVisibleBox.Checked := PointVisible;
     AreaFillStyleBox.ItemIndex := AreaFillStyle;
     AreaColorBox.Selected := AreaFillColor;
     StackStyleBox.ItemIndex := AreaStacking;
     PieCircledBox.Checked := PieCircled;
     PiePatternBox.Checked := PieUsePatterns;
-    PieRotationBox.Value := PieRotation;
+    PieRotateUpDown.Position := PieRotation;
     LabelsVisibleBox.Checked := LabelsVisible;
     LabelsTransparentBox.Checked := LabelsTransparent;
     LabelsBackColorBox.Selected := LabelsBackColor;
@@ -826,14 +908,16 @@ begin
   stLine:
   begin
     LineOptionsSheet.TabVisible := True;
+    LineVisibleBox.Visible := False;
     MarkOptionsSheet.TabVisible := True;
-    AreaOptionsSheet.TabVisible := True;
+    AreaOptionsSheet.TabVisible := False;
     LabelsOptionsSheet.TabVisible := True;
     PageControl2.ActivePage := LineOptionsSheet;
   end;
   stFastLine:
   begin
     LineOptionsSheet.TabVisible := True;
+    LineVisibleBox.Visible := False;
     MarkOptionsSheet.TabVisible := False;
     AreaOptionsSheet.TabVisible := False;
     LabelsOptionsSheet.TabVisible := False;
@@ -875,10 +959,8 @@ begin
   end;
 end;
 
-procedure TChartOptionsForm.GetSeriesOptions(const Index: Integer);
-{------------------------------------------------------
-   Transfer options from form to data series Index.
-------------------------------------------------------}
+{Transfer options from the dialog to a data series.}
+procedure TChartOptionsDlg.SaveSeriesOptions(const Index: Integer);
 var
   SeriesOptions: TSeriesOptions;
 begin
@@ -890,14 +972,14 @@ begin
     begin
       LineStyle := LineStyleBox.ItemIndex;
       LineColor := LineColorBox.Selected;
-      LineWidth := LineSizeBox.Value;
+      LineWidth := LineSizeUpDown.Position;
       LineVisible := LineVisibleBox.Checked;
     end;
     if MarkOptionsSheet.TabVisible then
     begin
       PointStyle := MarkStyleBox.ItemIndex;
       PointColor := MarkColorBox.Selected;
-      PointSize := MarkSizeBox.Value;
+      PointSize := MarkSizeUpDown.Position;
       PointVisible := MarkVisibleBox.Checked;
     end;
     if AreaOptionsSheet.TabVisible then
@@ -910,7 +992,7 @@ begin
     begin
       PieCircled := PieCircledBox.Checked;
       PieUsePatterns := PiePatternBox.Checked;
-      PieRotation := PieRotationBox.Value;
+      PieRotation := PieRotateUpDown.Position;
     end;
     if LabelsOptionsSheet.TabVisible then
     begin
@@ -921,6 +1003,11 @@ begin
       LabelsStyle := LabelsStyleBox.ItemIndex;
     end;
   end;
+end;
+
+procedure TChartOptionsDlg.HelpBtnClick(Sender: TObject);
+begin
+    Application.HelpCommand(HELP_CONTEXT, 230);
 end;
 
 end.

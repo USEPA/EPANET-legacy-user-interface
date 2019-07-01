@@ -20,7 +20,8 @@ interface
 
 uses
   SysUtils, Windows, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, ExtCtrls, Uglobals, Umap, Uutils;
+  Forms, Dialogs, ExtCtrls, System.Types,
+  Uglobals, Umap, Uutils;
 
 type
   TOVMapForm = class(TForm)
@@ -71,6 +72,8 @@ procedure TOVMapForm.FormCreate(Sender: TObject);
 // OnCreate event handler for the overview map form.
 // Creates an OVmap object of class TMap (see Umap unit).
 //-------------------------------------------------------
+var
+  P: TPoint;
 begin
   OVmap := TMap.Create;
   with OVmap do
@@ -82,6 +85,15 @@ begin
   FocusRect := Rect(-1,-1,-1,-1);
   Draging := False;
   NeedsUpdating := False;
+
+// Position form at bottom right of Main form
+  with MainForm do
+  begin
+    P.x := Left + Width - 2;
+    P.Y := Top + Height - 2;
+  end;
+  Top := P.Y - Height;
+  Left := P.X - Width;
 end;
 
 procedure TOVMapForm.FormClose(Sender: TObject;

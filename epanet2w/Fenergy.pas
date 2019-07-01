@@ -6,6 +6,7 @@ unit Fenergy;
 {                    Version: 2.0                                   }
 {                    Date:    5/29/00                               }
 {                             12/29/00                              }
+{                             4/30/18                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays an Energy Report summarizing       }
@@ -22,8 +23,10 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Grids, ComCtrls, TeEngine, Series, ExtCtrls, TeeProcs, Chart, StdCtrls,
-  Clipbrd, Xprinter, Uglobals, Uutils;
+  Grids, ComCtrls,  ExtCtrls,  StdCtrls, Clipbrd, System.Types,
+  System.UITypes, VCLTee.TeEngine, VCLTee.Series, VCLTee.TeeProcs, VCLTee.Chart,
+  VCLTee.TeCanvas, VclTee.TeeGDIPlus,
+  Xprinter, Uglobals, Uutils;
 
 const
   ColHeading1: array[0..6] of String =
@@ -61,7 +64,7 @@ type
     procedure CopyToString(const Fname: String);
     procedure RefreshTable;
     procedure RefreshChart;
-    procedure SetAxisStyle(Axis: TChartAxis);
+{   procedure SetAxisStyle(Axis: TChartAxis);  DEPRECATED  }
 
   public
     { Public declarations }
@@ -77,7 +80,7 @@ implementation
 
 {$R *.DFM}
 
-uses Dcopy, Fmain, Uoutput;
+uses Dcopy, Fmain, Uoutput, Dchart;
 
 procedure TEnergyForm.FormCreate(Sender: TObject);
 //------------------------------------------------
@@ -101,6 +104,7 @@ begin
     ColWidths[0] := 112;
   end;
 
+{  DEPRECATED
 // Set axis properties of chart
   Chart1.BottomAxis.Title.Caption := 'Pump';
   with Chart1 do
@@ -108,13 +112,14 @@ begin
     SetAxisStyle(BottomAxis);
     SetAxisStyle(LeftAxis);
   end;
+}
 
 // Set initial page to display
   PageControl1.ActivePage := TabSheet1;
   RadioGroup1.ItemIndex := 2;
 end;
 
-
+{  DEPRECATED
 procedure TEnergyForm.SetAxisStyle(Axis: TChartAxis);
 //---------------------------------------------------
 // Sets font style of a chart's axis
@@ -129,6 +134,7 @@ begin
     LabelsFont.Assign(Title.Font);
   end;
 end;
+}
 
 
 procedure TEnergyForm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -179,15 +185,9 @@ begin
         DrawText(Canvas.Handle, Buff, StrLen(Buff), Rect,
                DT_CENTER OR DT_VCENTER OR DT_WORDBREAK);
     end
-
   // Draw cell in leftmost column
     else if vCol = 0 then
     begin
-      if (gdSelected in State) then
-      begin
-        Canvas.Brush.Color := Color;
-        Canvas.Font.Color := clBlack;
-      end;
       Canvas.FillRect(Rect);
       SetTextAlign(Canvas.Handle, TA_LEFT);
       Canvas.TextOut(Rect.Left+2,Rect.Top+2,Cells[vCol,vRow]);
@@ -196,14 +196,7 @@ begin
   // Draw cell value for body of table
     else
     begin
-      if (gdSelected in State) then
-      begin
-        Canvas.Brush.Color := clInfoBk;
-        Canvas.Font.Color := clBlack;
-      end;
-      Canvas.Brush.Color := clInfoBk;   //$0080FFFF;
       Canvas.FillRect(Rect);
-      SetBkMode(Canvas.Handle,TRANSPARENT);
       SetTextAlign(Canvas.Handle, TA_RIGHT);
       Canvas.TextOut(Rect.Right-2,Rect.Top+2,Cells[vCol,vRow]);
     end;
@@ -227,13 +220,15 @@ procedure TEnergyForm.Chart1MouseDown(Sender: TObject;
 // OnMouseDown event handler for Chart1.
 // Invokes Chart Options dialog when right button clicked on chart.
 //------------------------------------------------------------------
+var
+  default: Boolean;
+  startPage: Integer;
 begin
-  if (Button = mbRight) then with MainForm.ChartDialog do
+  if (Button = mbRight) then
   begin
-    Chart := Chart1;
-    BoldFont := BoldFonts;
-    DefaultBox := False;
-    Execute;
+    default := False;
+    startPage := 0;
+    Dchart.Execute(self, Chart1, startPage, default);
   end;
 end;
 

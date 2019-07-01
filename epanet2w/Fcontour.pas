@@ -21,7 +21,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-   ExtCtrls, Clipbrd, Xprinter, Umap, Uglobals, Uutils;
+   ExtCtrls, Clipbrd, System.UITypes, System.Types,
+   Xprinter, Umap, Uglobals, Uutils;
 
 const
   DEFNdx = 20;      {# x-grid divisions}
@@ -164,7 +165,7 @@ begin
   end;
   RefreshContourPlot;
   if (ContourFlag = False) then
-    MessageDlg(MSG_TOO_FEW_NODES, mtInformation, [mbOK], 0);
+    Uutils.MsgDlg(MSG_TOO_FEW_NODES, mtInformation, [mbOK]);
   Result := ContourFlag;
 end;
 
@@ -1107,9 +1108,9 @@ begin
     GoToYPos(FrameTop+MapHeight);
     NextLine;
     if GetLinesLeft > 1 then PrintCenter(MapForm.TimeLegendPanel.Caption);
+    Screen.Cursor := crDefault;          {*** Updated 12/29/00 ***}
     EndJob;
   end;
-  Screen.Cursor := crDefault;          {*** Updated 12/29/00 ***}
 end;
 
 end.

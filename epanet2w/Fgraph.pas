@@ -6,6 +6,7 @@ unit Fgraph;
 {                    Version: 2.0                                   }
 {                    Date:    5/29/00                               }
 {                             9/7/00                                }
+{                             4/30/18                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays network data and analysis          }
@@ -19,8 +20,10 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, TeEngine, Series, ExtCtrls, TeeProcs, Chart, Math,
-  Clipbrd, XPrinter, Uglobals, Uutils;
+  Forms, Dialogs, ExtCtrls, Math, Clipbrd, System.UITypes,
+  VclTee.Series, VclTee.Chart, VclTee.TeEngine, VclTee.TeeProcs,
+  VclTee.TeCanvas, VclTee.TeeGDIPlus,
+  XPrinter, Uglobals, Uutils;
 
 const
   PRODUCED = 0;
@@ -74,6 +77,7 @@ type
     { Private declarations }
     Graph: TGraphSelection;
     SeriesList: TStringlist;    //List of data series created
+    ChartDlgPage: Integer;      //Starting page of chart options dialog
     procedure AddObsTimeData(aSeries: TPointSeries; const aTime: String;
       const Ystr: String);
     procedure CalibDataPlot(const Fname, ID: String);
@@ -102,6 +106,7 @@ type
     procedure RefreshReactRatePlot;
     procedure RefreshTimeSeriesPlot;
     procedure SaveDefaultOptions;
+    procedure SetAxisScale(theAxis: TChartAxis);  {--- Added 5/11/18 ---}
     procedure SetAxisOptions(Axis: TChartAxis);
   public
     { Public declarations }
@@ -120,7 +125,7 @@ implementation
 {$R *.DFM}
 
 uses
-  Dcopy, Fbrowser, Fmain, Uinput, Uoutput;
+  Dcopy, Fbrowser, Fmain, Uinput, Uoutput, Dchart;
 
 
 //===================================================================
@@ -137,21 +142,45 @@ begin
   Uglobals.SetFont(self);
   Graph.Items := TStringlist.Create;
   SeriesList := TStringlist.Create;
+  ChartDlgPage := 0;
 
+  // Create a TeeChart GDIplus canvas for antialiasing
+  Chart1.Canvas := TGDIPlusCanvas.Create;
+
+  // Make max. axis label round to highest integer value
+  with Chart1 do
+  begin
+    LeftAxis.MaximumRound := True;
+    BottomAxis.MaximumRound := True;
+    LeftAxis.MinimumRound := True;      {--- 5/11/18 ---}
+    BottomAxis.MinimumRound := True;    {--- 5/11/18 ---}
+  end;
+
+  // Make the left mouse zoom when shift key is pressed
+  Chart1.Zoom.KeyShift :=[ssShift];
+  Chart1.ScrollMouseButton := mbLeft;
+
+{  DEPRECATED
 // Set the mouse & keyboard controls for zooming
 // & scrolling the TeeChart component
   TeeZoomMouseButton := mbLeft;
   TeeZoomKeyShift := [ssCtrl];
   TeeScrollMouseButton := mbRight;
   TeeScrollKeyShift := [ssCtrl];
-
+}
 // Initialize chart properties
   with Chart1 do
   begin
     View3D := GraphOptions.View3D;
     Chart3DPercent := GraphOptions.Percent3D;
     Color := GraphOptions.PanelColor;
-    BackColor := GraphOptions.BackColor;
+    with BackWall do
+    begin
+      Color := GraphOptions.BackColor;
+      Gradient.Visible := False;
+      Transparent := False;
+      Visible := True;
+    end;
     Legend.ColorWidth := GraphOptions.LegendWidth;
     Legend.LegendStyle :=lsSeries;
     Legend.Alignment := TLegendAlignment(GraphOptions.LegendPosition);
@@ -194,9 +223,9 @@ procedure TGraphForm.FormDestroy(Sender: TObject);
 //------------------------------------------------
 begin
   with Chart1 do
-    while SeriesList.Count > 0 do Series[0].Free;
+    while SeriesCount > 0 do Series[0].Free;
   SeriesList.Free;
-  Graph.Items.Free;
+  if Assigned(Graph.Items) then Graph.Items.Free;
 end;
 
 procedure TGraphForm.Chart1MouseDown(Sender: TObject; Button: TMouseButton;
@@ -340,6 +369,7 @@ begin
   try
 
   // Get data for each time series
+    if Items.Count = 1 then Chart1.Legend.Visible := False;
     for k := 0 to Items.Count - 1 do
     begin
 
@@ -370,7 +400,6 @@ begin
 
     // Proceed to next series
     end;
-
   finally
     FreeMem(y, n*SizeOf(Single));
   end;
@@ -390,6 +419,13 @@ begin
       then CalibDataPlot(LinkCalibData[VarType].FileName, ID);
     end;
   end;
+  //with Chart1 do
+  //  if Series[SeriesCount-1].Count = 0 then Legend.Visible := False;
+
+{---  Added 5/11/18  ---}
+  // Scale the axes
+  SetAxisScale(Chart1.BottomAxis);
+  SetAxisScale(Chart1.LeftAxis);
 end;
 
 function TGraphForm.GetNodeData(const ID: String; const Vtype: Integer;
@@ -517,7 +553,13 @@ begin
               toklist[ntoks-2],toklist[ntoks-1]);
         end;
         with Chart1.Series[nseries] do
-          if (Count > 0) then ShowInLegend := True;
+        begin
+          if (Count > 0) then
+          begin
+            ShowInLegend := True;
+            Chart1.Legend.Visible := True;
+          end;
+        end;
         Chart1.Series[nseries].Active := True;
       finally
         toklist.Free;
@@ -596,9 +638,13 @@ begin
   begin
     Title.Text.Add(TXT_DISTRIBUTION + sTitle);
     BottomAxis.Title.Caption := xTitle;
-    LeftAxis.Title.Caption := TXT_PERCENT_LESS;
+    if Graph.ObjectType in [JUNCS..TANKS]
+    then sTitle := 'Percent of Nodes Less Than'
+    else sTitle := 'Percent of Links Less Than';
+    LeftAxis.Title.Caption := sTitle;
+    Legend.Visible := False;
   end;
-  CreateLineSeries(0,TXT_FREQUENCY);
+  CreateAreaSeries(TXT_FREQUENCY);
   RefreshFrequencyPlot;
   Result := True;
 end;
@@ -655,6 +701,8 @@ begin
         AddXY(Single(aList.Items[i]^), 100*i/en, '', clTeeColor);
       Active := True;
     end;
+    SetAxisScale(Chart1.LeftAxis);     {---  Added 5/11/18  ---}
+
   finally
     aList.Free;
     FreeMem(y, ny*SizeOf(Single));
@@ -709,6 +757,16 @@ begin
 
 // Create an AreaSeries for chart and draw it
   CreateAreaSeries('Series1');
+  if Chart1.SeriesCount > 0 then
+    with Chart1.Series[0] as TAreaSeries do
+  begin
+    Marks.Visible := True;
+    Marks.Transparent := GraphOptions.LabelsTransparent;
+    Marks.BackColor := GraphOptions.LabelsBackColor;
+    Marks.Clip := False;
+    SeriesColor := clMoneyGreen;;
+    AreaChartBrush.Color := clMoneyGreen;
+  end;
   RefreshProfilePlot;
   Result := True;
 end;
@@ -773,6 +831,12 @@ begin
       end;
     end;
     Active := True;
+
+{---  Added 5/11/18  ---}
+    // Scale the axes
+    SetAxisScale(Chart1.BottomAxis);
+    SetAxisScale(Chart1.LeftAxis);
+
   end;
 end;
 
@@ -914,6 +978,11 @@ begin
     x := x + dt;
   end;
   for k := PRODUCED to CONSUMED do Chart1.Series[k].Active := True;
+
+{---  Added 5/11/18  ---}
+  // Scale the axes
+  SetAxisScale(Chart1.BottomAxis);
+  SetAxisScale(Chart1.LeftAxis);
 end;
 
 procedure TGraphForm.GetSysFlow(const Period: Integer;
@@ -1021,12 +1090,25 @@ var
   aSeries: TAreaSeries;
 begin
   aSeries := TAreaSeries.Create(self);
-  with aSeries do
+   with aSeries do
   try
     ParentChart := Chart1;
     Active := False;
     Title := Stitle;
     ShowInLegend := False;
+
+    SeriesColor := clSkyBlue;;
+    AreaLinesPen.Visible := False;
+    AreaChartBrush.Color := clSkyBlue;
+    AreaChartBrush.Gradient.Visible := False;  //True;
+    Transparency := 25;
+    Marks.Visible := False;
+    Marks.Transparent := GraphOptions.LabelsTransparent;
+    Marks.BackColor := GraphOptions.LabelsBackColor;
+    Marks.Clip := False;
+    OnGetMarkText := GetMarkText;
+
+{  DEPRECATED
     SeriesColor := GraphOptions.AreaFillColor;
     AreaBrush := GraphOptions.AreaFillStyle;
     Marks.Visible := GraphOptions.LabelsVisible;
@@ -1034,6 +1116,7 @@ begin
     Marks.BackColor := GraphOptions.LabelsBackColor;
     Marks.Clip := False;
     OnGetMarkText := GetMarkText;
+}
   finally
     Result := Assigned(aSeries);
   end;
@@ -1083,6 +1166,36 @@ end;
 //         Functions for Setting & Saving Graph Options
 //===================================================================
 
+{---  Added 5/11/18  ---}
+procedure TGraphForm.SetAxisScale(theAxis: TChartAxis);
+//-----------------------------------------------------------------------------
+//  Automatically scales the graph's axes
+//-----------------------------------------------------------------------------
+var
+  zMin, zMax, zInc: Double;
+begin
+  if theAxis.IsDateTime then Exit;
+  with theAxis do
+  begin
+    Automatic := False;
+    AutomaticMinimum := False;
+    AutomaticMaximum := False;
+    if theAxis = Chart1.BottomAxis then
+      begin
+        zMin := Chart1.MinXValue(theAxis);
+        zMax := Chart1.MaxXValue(theAxis);
+      end
+      else
+      begin
+        zMin := Chart1.MinYValue(theAxis);
+        zMax := Chart1.MaxYValue(theAxis);
+      end;
+      Uutils.AutoScale(zMin, zMax, zInc);
+      SetMinMax(zMin, zMax);
+      Increment := zInc;
+  end;
+end;
+
 procedure TGraphForm.SetAxisOptions(Axis: TChartAxis);
 //----------------------------------------------------
 // Initializes axis properties for TeeChart component
@@ -1092,17 +1205,21 @@ var
 begin
   with Axis do
   begin
+{  DEPRECATED
     Automatic := True;
     AutomaticMinimum := True;
     AutomaticMaximum := True;
-    Grid.Visible := True;
+}
     if Horizontal then i := 0
     else i := 1;
+    Grid.Visible := GraphOptions.AxisGridStyle[i] > 0;
+{  DEPRECATED
     case GraphOptions.AxisGridStyle[i] of
     0: Grid.Visible := False;
     1: Grid.Style := psSolid;
     2: Grid.Style := psDot;
     end;
+}
     Title.Font.Name := GraphOptions.AxisFontName;
     Title.Font.Size := GraphOptions.AxisFontSize;
     if GraphOptions.AxisFontBold then
@@ -1114,15 +1231,12 @@ begin
 end;
 
 procedure TGraphForm.SetGraphOptions;
+var
+   default: Boolean;
 begin
-  with MainForm.ChartDialog do
-  begin
-    Chart := Chart1;
-    BoldFont := BoldFonts;
-    DefaultBox := True;
-    Execute;
-    if DefaultChecked then SaveDefaultOptions;
-  end;
+  default := True;
+  Dchart.Execute(self, Chart1, ChartDlgPage, default);
+  if default then SaveDefaultOptions;
 end;
 
 procedure TGraphForm.SaveDefaultOptions;
@@ -1149,9 +1263,12 @@ begin
     end;
     with Chart1.BottomAxis do
     begin
+      AxisGridStyle[0] := Integer(Grid.Visible);
+{  DEPRECATED
       if not Grid.Visible then AxisGridStyle[0] := 0
       else if Grid.Style = psSolid then AxisGridStyle[0] := 1
       else if Grid.Style = psDot then AxisGridStyle[0] := 2;
+}
       with Title.Font do
       begin
         AxisFontName := Name;
@@ -1161,9 +1278,12 @@ begin
     end;
     with Chart1.LeftAxis do
     begin
+      AxisGridStyle[1] := Integer(Grid.Visible);
+{  DEPRECATED
       if not Grid.Visible then AxisGridStyle[1] := 0
       else if Grid.Style = psSolid then AxisGridStyle[1] := 1
       else if Grid.Style = psDot then AxisGridStyle[1] := 2;
+}
     end;
     for i := 0 to Chart1.SeriesCount-1 do
     begin

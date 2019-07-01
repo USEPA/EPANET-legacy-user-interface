@@ -6,6 +6,7 @@ unit Fcalib;
 {                    Version: 2.0                                   }
 {                    Date:    5/29/00                               }
 {                             6/24/02                               }
+{                             4/30/18                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays a Calibration Report comparing     }
@@ -56,8 +57,9 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Series, TeEngine, ExtCtrls, TeeProcs, Chart, StdCtrls, ComCtrls, Checklst,
-  Clipbrd, Xprinter, Uglobals, Uutils;
+  ExtCtrls, StdCtrls, ComCtrls, Checklst, Clipbrd, System.UITypes,
+  VCLTee.Chart, VCLTee.Series, VCLTee.TeEngine, VCLTee.TeeProcs, VCLTee.TeCanvas,
+  Xprinter, Uglobals, Uutils, VclTee.TeeGDIPlus;
 
 const
   NSUMS = 8;
@@ -96,10 +98,6 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure FormActivate(Sender: TObject);
-    procedure Chart1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure Chart2MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
     RptType : Integer;
@@ -119,7 +117,6 @@ type
     procedure GetCalibErrors(CalibData: TCalibData;
       var Netsums: array of Single; var Meansums: array of Single);
     function  GetTimeSeries(const ID: String): Boolean;
-    procedure SetAxisStyle(Axis: TChartAxis);
     procedure UpdateErrorStats(const aTime: String; const aValue: String;
       var Sums: array of Single);
   public
@@ -267,32 +264,6 @@ begin
   Uglobals.SetFont(self);
   Memo1.Font.Style := Font.Style;
   PageControl1.ActivePage := TabSheet1;
-  with Chart1 do
-  begin
-    SetAxisStyle(BottomAxis);
-    SetAxisStyle(LeftAxis);
-  end;
-  with Chart2 do
-  begin
-    SetAxisStyle(BottomAxis);
-    SetAxisStyle(LeftAxis);
-  end;
-end;
-
-
-procedure TCalibReportForm.SetAxisStyle(Axis: TChartAxis);
-//--------------------------------------------------------
-// Sets font style for a chart's axis
-//--------------------------------------------------------
-begin
-  with Axis do
-  begin
-    if BoldFonts then
-      Title.Font.Style := Title.Font.Style + [fsBold]
-    else
-      Title.Font.Style := [];
-    LabelsFont.Assign(Title.Font);
-  end;
 end;
 
 
@@ -303,40 +274,6 @@ procedure TCalibReportForm.FormActivate(Sender: TObject);
 //-------------------------------------------------------
 begin
   MainForm.TBOptions.Enabled := True;
-end;
-
-
-procedure TCalibReportForm.Chart1MouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-//------------------------------------------------------------------
-// OnMouseDown event handler for Chart1.
-// Invokes Chart Options dialog when right button clicked on chart.
-//------------------------------------------------------------------
-begin
-  if (Button = mbRight) then with MainForm.ChartDialog do
-  begin
-    Chart := Chart1;
-    BoldFont := BoldFonts;
-    DefaultBox := False;
-    Execute;
-  end;
-end;
-
-
-procedure TCalibReportForm.Chart2MouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-//------------------------------------------------------------------
-// OnMouseDown event handler for Chart2.
-// Invokes Chart Options dialog when right button clicked on chart.
-//------------------------------------------------------------------
-begin
-  if (Button = mbRight) then with MainForm.ChartDialog do
-  begin
-    Chart := Chart2;
-    BoldFont := BoldFonts;
-    DefaultBox := False;
-    Execute;
-  end;
 end;
 
 
@@ -761,6 +698,7 @@ begin
                 Pointer.Visible := True;
                 Pointer.Style := psCross;
                 Pointer.Pen.Width := 2;
+                Pointer.Pen.Color := MarkerColors[ColorIndex];
                 SeriesColor := MarkerColors[ColorIndex];
               finally
               end;

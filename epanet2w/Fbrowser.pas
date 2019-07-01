@@ -27,10 +27,11 @@ interface
 
 uses
   SysUtils, Windows, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls,
+  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls, Grids,
+  System.Types, System.UITypes,
 {*** Updated 11/19/01 ***}
 {*** Updated 12/14/01 ***}
-  Xprinter, Uglobals, Uutils, VirtList, Grids;
+  Xprinter, Uglobals, Uutils, VirtList;
 
 const
 {*** Updated 3/1/01 ***}
@@ -118,9 +119,11 @@ type
     { Private declarations }
     OldQualParam: TWaterQuality;
     function  GetLastNodes(var N1, N2: TNode): Boolean;
+{  DEPRECATED
     procedure PrintCurve(Destination: TDestination);
     procedure PrintPattern(Destination: TDestination);
     procedure PrintControls(Destination: TDestination);
+}
     procedure RefreshTimeLegend;
     procedure UpdateVCRStatus;
   public
@@ -129,7 +132,7 @@ type
     procedure EnableTimeControls;
     procedure InitDataPage;
     procedure InitMapPage;
-    procedure Print(Destination: TDestination);
+{   procedure Print(Destination: TDestination);  DEPRECATED  }
     procedure RefreshMap;
     procedure SetOptions;
     procedure UpdateBrowser(const ObjType: Integer; const Index: Integer);
@@ -280,7 +283,7 @@ begin
 
 // Ask for confirmation of deletion
   if ConfirmDelete then
-    if MessageDlg(TXT_DELETE_OBJECT,mtConfirmation,[mbYes,mbNo],0)
+    if Uutils.MsgDlg(TXT_DELETE_OBJECT,mtConfirmation,[mbYes,mbNo],MainForm)
       = mrNo then Exit;
 
 // Erase visual object from map
@@ -998,9 +1001,9 @@ end;
 
 
 //=============================================================
-//                        Printing Routines
+//                        Printing Routines -- DEPRECATED
 //=============================================================
-
+{
 procedure TBrowserForm.Print(Destination: TDestination);
 //------------------------------------------------------
 // Prints properties of current item selected in Browser
@@ -1223,5 +1226,5 @@ begin
     EndJob;
   end;
 end;
-
+}
 end.

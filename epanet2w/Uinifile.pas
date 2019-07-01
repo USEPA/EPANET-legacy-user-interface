@@ -24,6 +24,7 @@ procedure ReadDefaults;
 procedure SaveDefaults;
 procedure ReadMainFormSize;
 procedure SaveMainFormSize;
+procedure ReadStyleName;
 
 implementation
 
@@ -93,7 +94,7 @@ var
   i       : Integer;
   s       : String;
   fname   : String;
-  dname   : String;
+{ dname   : String;  DEPRECATED  }
 begin
 // Initialize graph options with factory settings
   GraphOptions := DefGraphOptions;
@@ -146,13 +147,15 @@ begin
 
   // Retrieve directory names
     fname := ReadString('Directories','DataDir',EpanetDir);
-    if (DirectoryExists(fname)) then SetCurrentDir(fname);
+    if (SysUtils.DirectoryExists(fname)) then SetCurrentDir(fname);
+{  DEPRECATED
     dname := ReadString('Directories','TempDir',TempDir);
     if dname[Length(dname)] <> '\' then dname := dname + '\';
-    if (DirectoryExists(dname)) then TempDir := dname;
+    if (SysUtils.DirectoryExists(dname)) then TempDir := dname;
+}
 
   // Retrieve general preferences
-    FontName := ReadString('Preferences','FontName','MS Sans Serif');
+    FontName := ReadString('Preferences','FontName','Segoe UI'); //'Tahoma'); //'MS Sans Serif');
     BoldFonts := ReadBool('Preferences','BoldFonts',False);
     Blinking := ReadBool('Preferences','Blinking',True);
     FlyOvers := ReadBool('Preferences','FlyOvers',True);
@@ -166,12 +169,14 @@ begin
   // Retrieve Property Editor parameters
     with PropEditForm do
     begin
+{  DEPRECATED
       Left := ReadInteger('Property Editor','Left',Left);
       Top  := ReadInteger('Property Editor','Top',Top);
-      Width := ReadInteger('Property Editor','Width',Width);
-      Height := ReadInteger('Property Editor','Height',Height);
       if Left > Screen.Width then Left := (Screen.Width - Width) div 2;
       if Top  > Screen.Height then Top := (Screen.Height - Height) div 2;
+}
+      Width := ReadInteger('Property Editor','Width',Width);
+      Height := ReadInteger('Property Editor','Height',Height);
       Editor.HeaderSplit := ReadInteger('Property Editor','HeaderSplit',
          Editor.HeaderSplit);
     end;
@@ -240,7 +245,7 @@ begin
   // Save directory names
     GetDir(0,s);
     WriteString('Directories','DataDir',s);
-    WriteString('Directories','TempDir',TempDir);
+{   WriteString('Directories','TempDir',TempDir);  DEPRECATED  }
 
   // Save general program preferences
     WriteBool('Preferences','BoldFonts',BoldFonts);
@@ -248,6 +253,7 @@ begin
     WriteBool('Preferences','FlyOvers',FlyOvers);
     WriteBool('Preferences','AutoBackup',AutoBackup);
     WriteBool('Preferences','ConfirmDelete',ConfirmDelete);
+    WriteString('Preferences', 'StyleName', StyleName);
 
   // Save MRU file names
     for i := 0 to 3 do WriteString('MRU',IntToStr(i),MainForm.MRUList[i]);
@@ -434,6 +440,26 @@ begin
       WriteInteger('MainForm','Width',R.Right-R.Left);
       WriteInteger('MainForm','Height',R.Bottom-R.Top);
     end;
+  finally
+    Free;
+  end;
+end;
+
+
+procedure ReadStyleName;
+//-------------------------------------
+// Reads the name of a UI style to use
+//-------------------------------------
+begin
+  // Initialize UI style
+  Uglobals.StyleName := 'Windows';
+
+  // Create the .INI file object
+  with TIniFile.Create(IniFileDir + INIFILE) do
+  try
+    Uglobals.StyleName := ReadString('Preferences', 'StyleName', 'Windows');
+
+  // Free the .INI file object
   finally
     Free;
   end;

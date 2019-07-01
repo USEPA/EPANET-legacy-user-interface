@@ -88,6 +88,7 @@ type
 procedure Register;
 
 implementation
+{$R 'Numedit.dcr'}
 
 procedure Register;
 begin
@@ -138,7 +139,7 @@ begin
   // For the NoSpace style, ignore spaces, double quotes & semicolons
   else if (FStyle = esNoSpace) then
   begin
-    if (Key in [' ', '"', ';']) then Key := #0;
+    if CharInSet(Key,[' ', '"', ';']) then Key := #0;
   end;
 end;
 

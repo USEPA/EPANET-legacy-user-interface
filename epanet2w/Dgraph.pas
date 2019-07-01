@@ -18,7 +18,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, Uglobals;
+  StdCtrls, ExtCtrls, ComCtrls, System.UITypes, Uglobals, Uutils;
 
 const
   TXT_NO_VARIABLE = 'No parameter was selected';
@@ -303,7 +303,7 @@ begin
   if (RGGraphType.ItemIndex <> SYSFLOWPLOT)
   and (CBVariable.ItemIndex < 0) then
   begin
-    MessageDlg(TXT_NO_VARIABLE, mtError, [mbOK], 0);
+    Uutils.MsgDlg(TXT_NO_VARIABLE, mtError, [mbOK]);
     Exit;
   end;
 
@@ -312,24 +312,24 @@ begin
   TIMESERIESPLOT:
     if LBItems.Items.Count <= 0 then
     begin
-      MessageDlg(TXT_NO_ITEMS, mtError, [mbOK], 0);
+      Uutils.MsgDlg(TXT_NO_ITEMS, mtError, [mbOK]);
       Exit;
     end
     else if LBItems.Items.Count > MAXSERIES then
     begin
-      MessageDlg(TXT_TOO_MANY_ITEMS, mtError, [mbOK], 0);
+      Uutils.MsgDlg(TXT_TOO_MANY_ITEMS, mtError, [mbOK]);
       Exit;
     end;
   PROFILEPLOT:
     if LBItems.Items.Count <= 0 then
     begin
-      MessageDlg(TXT_NO_ITEMS, mtError, [mbOK], 0);
+      Uutils.MsgDlg(TXT_NO_ITEMS, mtError, [mbOK]);
       Exit;
     end;
   SYSFLOWPLOT:
     if not RunFlag then
     begin
-      MessageDlg(TXT_NO_RESULTS, mtError, [mbOK], 0);
+      Uutils.MsgDlg(TXT_NO_RESULTS, mtError, [mbOK]);
       Exit;
     end;
   end;
@@ -356,12 +356,12 @@ begin
   case RGObjectType.ItemIndex of
   0: if CurrentList in [JUNCS..TANKS] = False then
      begin
-       MessageDlg(TXT_NO_NODE_SELECTED, mtError, [mbOK], 0);
+       Uutils.MsgDlg(TXT_NO_NODE_SELECTED, mtError, [mbOK]);
        Exit;
      end;
   1: if CurrentList in [PIPES..VALVES] = False then
      begin
-       MessageDlg(TXT_NO_LINK_SELECTED, mtError, [mbOK], 0);
+       Uutils.MsgDlg(TXT_NO_LINK_SELECTED, mtError, [mbOK]);
        Exit;
      end;
   end;
@@ -526,7 +526,7 @@ var
 begin
   with GraphSelection do
   begin
-    Items := nil;
+    Items := LBItems.Items;
     case RGGraphType.ItemIndex of
       TIMESERIESPLOT:
       begin
@@ -536,7 +536,6 @@ begin
         else
           ObjectType := LINKSERIES;
         VarType := CBVariable.ItemIndex + 1;
-        Items := LBItems.Items;
       end;
       PROFILEPLOT:
       begin
@@ -544,7 +543,6 @@ begin
         VarType := CBVariable.ItemIndex + 1;
         ObjectType := NETNODES;
         Period := CBTimePeriod.ItemIndex;
-        Items := LBItems.Items;
       end;
       CONTOURPLOT:
       begin

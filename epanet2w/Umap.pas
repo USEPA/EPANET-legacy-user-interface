@@ -20,7 +20,8 @@ unit Umap;
 interface
 
 uses Windows, Graphics, SysUtils, Dialogs, Forms, Classes,
-     Controls, Math, Uglobals, Uutils, Uinput, Uoutput, Dlegend;
+     Controls, Math, System.Types, System.UITypes,
+     Uglobals, Uutils, Uinput, Uoutput, Dlegend;
 
 const
   MAX_INT_COORD = 32767;
@@ -418,6 +419,7 @@ var
   size  : Integer;
   offset: Integer;
   e     : Single;
+  color : TColor;   {*** Added 5/11/18 ***}
 
 begin
 // Check if object falls within current display window
@@ -468,6 +470,22 @@ begin
     aLink := Link(ObjType,Index);
     SetLinkColor(ObjType,Index);
     size := SetLinkSize;
+
+{***  Added 5/11/18  ***}
+    if Options.DispLinkBorder then
+    begin
+      color := Canvas.Pen.Color;
+      if color <> ForeColor then
+      begin
+        Canvas.Pen.Color := ForeColor;
+        if size = 4 then size := 3
+        else if size = 5 then size := 6;
+        Canvas.Pen.Width := size + 2;
+        DrawLink(P1, P2, aLink);
+        Canvas.Pen.Color := color;
+      end;
+    end;
+
     offset := size;
     Canvas.Pen.Width := size;
     DrawLink(P1,P2,aLink);
@@ -1245,8 +1263,8 @@ begin
 // Create a Font object to determine label's width & height
     aFont := TFont.Create;
     try
-      W := 10;
-      H := 10;
+      //W := 10;
+      //H := 10;
       aFont.Assign(Canvas.Font);
       Uinput.GetLabelFont(Index,Canvas.Font);
       Lsize := Canvas.TextExtent(Network.Lists[LABELS].Strings[Index]);

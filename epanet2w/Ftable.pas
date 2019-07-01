@@ -29,8 +29,8 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, Grids, ClipBrd, ExtCtrls, StdCtrls, Xprinter,
-  Uglobals, Uutils, Printers;
+  Forms, Dialogs, Grids, ClipBrd, ExtCtrls, StdCtrls, System.UITypes,
+  System.Types, Printers, XPrinter, Uglobals, Uutils;
 
 const
   TXT_NETWORK_NODES = 'Network Table - Nodes';
@@ -53,7 +53,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormActivate(Sender: TObject);
-    procedure Grid1DrawCell(Sender: TObject; vCol, vRow: Longint;
+    procedure Grid1DrawCell(Sender: TObject; vCol, vRow: Integer;
       Rect: TRect; State: TGridDrawState);
     procedure Grid1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);

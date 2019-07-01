@@ -17,7 +17,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, Consts, Uglobals, Uutils, Epanet2;
+  StdCtrls, ExtCtrls, Consts, System.UITypes,
+  Uglobals, Uutils, Epanet2;
 
 const
   TXT_STATUS_RUNING = 'Runing EPANET simulator...';
@@ -137,6 +138,7 @@ procedure TSimulationForm.Execute;
 //--------------------------------------
 var
   err: Integer;
+  InpFile, RptFile, OutFile: AnsiString;  // Ansi string versions of file names
 
 begin
 // Save current input data to temporary file
@@ -148,8 +150,10 @@ begin
   try
     StatusLabel.Caption := TXT_CHECKING;
     StatusLabel.Refresh;
-    err := ENopen(PChar(TempInputFile),PChar(TempReportFile),
-                  PChar(TempOutputFile));
+    InpFile := AnsiString(TempInputFile);
+    RptFile := AnsiString(TempReportFile);
+    OutFile := AnsiString(TempOutputFile);
+    err := ENopen(PAnsiChar(InpFile), PAnsiChar(RptFile), PAnsiChar(OutFile));
 
 // Solve for hydraulics & water quality, then close solver
     if (err = 0) and (RunStatus <> rsCancelled) then  err := RunHydraulics;
@@ -160,7 +164,7 @@ begin
   except
     on E: Exception do
     begin
-      MessageDlg(E.Message, mtError, [mbOK], 0);
+      Uutils.MsgDlg(E.Message, mtError, [mbOK]);
       ENclose;
       Runstatus := rsShutdown;
     end;

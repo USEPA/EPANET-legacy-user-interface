@@ -15,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, Xprinter, Uglobals;
+  StdCtrls, ExtCtrls, System.UITypes, Xprinter, Uglobals;
 
 type
   TInpErrForm = class(TForm)

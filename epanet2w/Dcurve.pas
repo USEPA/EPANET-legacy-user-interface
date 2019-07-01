@@ -15,8 +15,9 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, TeeProcs, TeEngine, Chart, Grids, Series,
-  Math, Uglobals, Uutils;
+  StdCtrls, ExtCtrls, VCLTee.TeeProcs, VCLTee.TeEngine, VCLTee.Chart,
+  VCLTee.Series, VclTee.TeeGDIPlus, System.UITypes, Grids, Math,
+  Uglobals, Uutils;
 
 const
   VOLCURVE   = 0;
@@ -24,7 +25,7 @@ const
   EFFCURVE   = 2;
   HLOSSCURVE = 3;
   MAXPOINTS = 50;
-  TINY = 1.e-6;
+  TINY = 0.000001;  //1.e-6;
   Xlabel: array[0..3] of PChar =
     (' Height', ' Flow', ' Flow', ' Flow');
   Ylabel: array[0..3] of PChar =
@@ -162,7 +163,7 @@ begin
     begin
       if X[I] <= Xprev then
       begin
-        MessageDlg(CurveGrid.Cells[0,0] + MSG_OUT_OF_ORDER, mtError, [mbOK], 0);
+        Uutils.MsgDlg(CurveGrid.Cells[0,0] + MSG_OUT_OF_ORDER, mtError, [mbOK]);
         exit;
       end;
       Xprev := X[I];
@@ -176,7 +177,7 @@ begin
     begin
       if FitPumpCurve(N) = False then
       begin
-        if (MessageDlg(MSG_BAD_CURVE, mtWarning, [mbYes,mbNo], 0)
+        if (Uutils.MsgDlg(MSG_BAD_CURVE, mtWarning, [mbYes,mbNo])
           = mrYes) then Exit;
       end;
     end;

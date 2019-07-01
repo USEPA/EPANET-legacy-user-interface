@@ -14,8 +14,9 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, Buttons, Grids, ExtCtrls,
-  Uglobals, Uutils, TeEngine, Series, TeeProcs, Chart;
+  Forms, Dialogs, StdCtrls, Buttons, Grids, ExtCtrls, System.UITypes,
+  VCLTee.TeEngine, VCLTee.Series, VCLTee.TeeProcs, VCLTee.Chart,
+  VclTee.TeeGDIPlus, Uglobals, Uutils;
 
 const
   MAXPERIODS = 24;
@@ -34,7 +35,6 @@ const
 
 type
   TPatternForm = class(TForm)
-    Bevel1: TBevel;
     Label1: TLabel;
     Label2: TLabel;
     PatternID: TEdit;
@@ -293,7 +293,7 @@ begin
     begin
       msg := TXT_REPLACE_ALL + OldID +
              TXT_REPLACE_WITH + PatternID.Text + '?';
-      if MessageDlg(msg, mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+      if Uutils.MsgDlg(msg, mtConfirmation, [mbYes, mbNo]) = mrYes then
         UpdateIDs(PatternID.Text);
     end;
     ModalResult := mrOK;

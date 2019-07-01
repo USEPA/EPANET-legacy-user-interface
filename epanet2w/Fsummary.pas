@@ -15,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Grids, StdCtrls, ExtCtrls, Uglobals;
+  Grids, StdCtrls, ExtCtrls, System.UITypes, Uglobals;
 
 type
   TSummaryForm = class(TForm)

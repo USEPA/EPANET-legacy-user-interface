@@ -53,7 +53,10 @@ uses
   epanet2 in 'epanet2.pas',
   Dcolramp in 'Dcolramp.pas' {ColorRampForm},
   Ureport in 'Ureport.pas',
-  Uexport in 'Uexport.pas';
+  Uexport in 'Uexport.pas',
+  Dchart in 'Dchart.pas' {ChartOptionsDlg},
+  Vcl.Themes,
+  Vcl.Styles;
 
 {$R *.RES}
 
@@ -61,5 +64,8 @@ begin
   Application.Initialize;
   Application.Title := 'EPANET 2';
   Application.CreateForm(TMainForm, MainForm);
+  Application.CreateForm(TFindForm, FindForm);
+  Application.CreateForm(TQueryForm, QueryForm);
+  Application.CreateForm(TOVMapForm, OVMapForm);
   Application.Run;
 end.

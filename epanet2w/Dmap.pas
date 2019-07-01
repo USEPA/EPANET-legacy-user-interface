@@ -73,6 +73,7 @@ type
 {*** Updated 3/1/01 ***}    
     NotationFontSize: TSpinEdit;
     Label1: TLabel;
+    LinkBorder: TCheckBox;
 
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
@@ -155,6 +156,7 @@ begin
 
     LinkSpin.Value := LinkSize;
     LinksBySize.Checked := DispLinksBySize;
+    LinkBorder.Checked := DispLinkBorder;
 
     NodeBorder.Checked := DispNodeBorder;
     JuncSymbols.Checked := DispJuncs;
@@ -211,6 +213,7 @@ begin
 
     LinkSize := LinkSpin.Value;
     DispLinksBySize := LinksBySize.Checked;
+    DispLinkBorder := LinkBorder.Checked;
 
     DispNodeBorder := NodeBorder.Checked;
     DispJuncs := JuncSymbols.Checked;
