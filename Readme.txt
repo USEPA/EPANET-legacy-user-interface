@@ -1,5 +1,5 @@
-CONTENTS OF EPANET2W.zip
-==========================
+CONTENTS OF EPANET2W.ZIP
+=========================
 This archive contains the Delphi source code for the Windows graphical
 user interface, EPANET2W, that runs EPANET Version 2.2. EPANET is a 
 pipe network analysis program that allows a user to create or import a
