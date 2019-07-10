@@ -3,8 +3,8 @@ unit Dinperr;
 {-------------------------------------------------------------------}
 {                    Unit:    Dinperr.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit that lists any error messages generated when a        }
@@ -15,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, Xprinter, Uglobals;
+  StdCtrls, ExtCtrls, System.UITypes, Xprinter, Uglobals;
 
 type
   TInpErrForm = class(TForm)
@@ -76,7 +76,7 @@ procedure TInpErrForm.Button3Click(Sender: TObject);
 // OnClick handler for Error Codes button.
 //--------------------------------------------------
 begin
-  Application.HelpContext(298);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 298);
 end;
 
 end.

@@ -3,9 +3,8 @@ unit Ddefault;
 {-------------------------------------------------------------------}
 {                    Unit:    Ddefault.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box that selects default settings       }
@@ -307,12 +306,17 @@ begin
 end;
 
 procedure TDefaultsForm.BtnHelpClick(Sender: TObject);
+var
+  HC: Integer;
 begin
   Case TabControl1.TabIndex of
-    0:  Application.HelpContext(138);
-    1:  Application.HelpContext(140);
-    2:  Application.HelpContext(139);
+    0:  HC := 138;
+    1:  HC := 140;
+    2:  HC := 139;
+    else HC := 0;
   end;
+  if HC > 0
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

@@ -3,10 +3,8 @@ unit Fcontour;
 {-------------------------------------------------------------------}
 {                    Unit:    Fcontour.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             12/29/00                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays a contour plot of a node           }
@@ -21,7 +19,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-   ExtCtrls, Clipbrd, Xprinter, Umap, Uglobals, Uutils;
+   ExtCtrls, Clipbrd, System.UITypes, System.Types,
+   Xprinter, Umap, Uglobals, Uutils;
 
 const
   DEFNdx = 20;      {# x-grid divisions}
@@ -164,7 +163,7 @@ begin
   end;
   RefreshContourPlot;
   if (ContourFlag = False) then
-    MessageDlg(MSG_TOO_FEW_NODES, mtInformation, [mbOK], 0);
+    Uutils.MsgDlg(MSG_TOO_FEW_NODES, mtInformation, [mbOK]);
   Result := ContourFlag;
 end;
 
@@ -1080,7 +1079,6 @@ begin
     MapWidth := FrameWidth;
     MapHeight := FrameHeight;
 
-{*** Updated 12/29/00 ***}
   // Adjust bounding box to preserve aspect ratio & center it
     SF := ClientHeight/ClientWidth;
     if MapHeight/SF > MapWidth
@@ -1107,9 +1105,9 @@ begin
     GoToYPos(FrameTop+MapHeight);
     NextLine;
     if GetLinesLeft > 1 then PrintCenter(MapForm.TimeLegendPanel.Caption);
+    Screen.Cursor := crDefault;
     EndJob;
   end;
-  Screen.Cursor := crDefault;          {*** Updated 12/29/00 ***}
 end;
 
 end.

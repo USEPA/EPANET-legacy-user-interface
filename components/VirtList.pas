@@ -115,6 +115,7 @@ type
 procedure Register;
 
 implementation
+{$R 'VirtList.dcr'}
 
 procedure Register;
 begin

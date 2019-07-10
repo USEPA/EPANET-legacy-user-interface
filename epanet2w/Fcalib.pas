@@ -3,14 +3,12 @@ unit Fcalib;
 {-------------------------------------------------------------------}
 {                    Unit:    Fcalib.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             6/24/02                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays a Calibration Report comparing     }
 {   simulated results against observed data.                        }
-{                                                                   }
 {-------------------------------------------------------------------}
 
 (*******************************************************************
@@ -56,8 +54,9 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Series, TeEngine, ExtCtrls, TeeProcs, Chart, StdCtrls, ComCtrls, Checklst,
-  Clipbrd, Xprinter, Uglobals, Uutils;
+  ExtCtrls, StdCtrls, ComCtrls, Checklst, Clipbrd, System.UITypes,
+  VCLTee.Chart, VCLTee.Series, VCLTee.TeEngine, VCLTee.TeeProcs, VCLTee.TeCanvas,
+  Xprinter, Uglobals, Uutils, VclTee.TeeGDIPlus;
 
 const
   NSUMS = 8;
@@ -66,15 +65,12 @@ const
   TXT_NO_DATA = ' *** No observed data during simulation period. ***';
   TXT_CORRELATION = '  Correlation Between Means: ';
   TXT_TITLE = ' Calibration Statistics for ';
-
-{*** Updated 6/24/02 ***}
   TXT_HEADING1 =
   '                Num    Observed    Computed    Mean     RMS';
   TXT_HEADING2 =
   '  Location      Obs        Mean        Mean   Error   Error';
   TXT_HEADING3 =
   '  ---------------------------------------------------------';
-{*** End of update ***}
 
   MarkerColors : array[0..14] of TColor =
     (clBlack, clRed, clPurple, clLime, clBlue, clFuchsia, clAqua,
@@ -96,10 +92,7 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure FormActivate(Sender: TObject);
-    procedure Chart1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-    procedure Chart2MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     RptType : Integer;
@@ -119,7 +112,6 @@ type
     procedure GetCalibErrors(CalibData: TCalibData;
       var Netsums: array of Single; var Meansums: array of Single);
     function  GetTimeSeries(const ID: String): Boolean;
-    procedure SetAxisStyle(Axis: TChartAxis);
     procedure UpdateErrorStats(const aTime: String; const aValue: String;
       var Sums: array of Single);
   public
@@ -267,32 +259,6 @@ begin
   Uglobals.SetFont(self);
   Memo1.Font.Style := Font.Style;
   PageControl1.ActivePage := TabSheet1;
-  with Chart1 do
-  begin
-    SetAxisStyle(BottomAxis);
-    SetAxisStyle(LeftAxis);
-  end;
-  with Chart2 do
-  begin
-    SetAxisStyle(BottomAxis);
-    SetAxisStyle(LeftAxis);
-  end;
-end;
-
-
-procedure TCalibReportForm.SetAxisStyle(Axis: TChartAxis);
-//--------------------------------------------------------
-// Sets font style for a chart's axis
-//--------------------------------------------------------
-begin
-  with Axis do
-  begin
-    if BoldFonts then
-      Title.Font.Style := Title.Font.Style + [fsBold]
-    else
-      Title.Font.Style := [];
-    LabelsFont.Assign(Title.Font);
-  end;
 end;
 
 
@@ -303,40 +269,6 @@ procedure TCalibReportForm.FormActivate(Sender: TObject);
 //-------------------------------------------------------
 begin
   MainForm.TBOptions.Enabled := True;
-end;
-
-
-procedure TCalibReportForm.Chart1MouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-//------------------------------------------------------------------
-// OnMouseDown event handler for Chart1.
-// Invokes Chart Options dialog when right button clicked on chart.
-//------------------------------------------------------------------
-begin
-  if (Button = mbRight) then with MainForm.ChartDialog do
-  begin
-    Chart := Chart1;
-    BoldFont := BoldFonts;
-    DefaultBox := False;
-    Execute;
-  end;
-end;
-
-
-procedure TCalibReportForm.Chart2MouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-//------------------------------------------------------------------
-// OnMouseDown event handler for Chart2.
-// Invokes Chart Options dialog when right button clicked on chart.
-//------------------------------------------------------------------
-begin
-  if (Button = mbRight) then with MainForm.ChartDialog do
-  begin
-    Chart := Chart2;
-    BoldFont := BoldFonts;
-    DefaultBox := False;
-    Execute;
-  end;
 end;
 
 
@@ -360,6 +292,23 @@ begin
   FreeChart1Series;
 end;
 
+
+procedure TCalibReportForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  HC: Integer;
+begin
+  if Key = vk_F1 then
+  begin
+    case PageControl1.ActivePageIndex of
+      0: HC := 270;
+      1: HC := 271;
+      2: HC := 272;
+      else HC := 0;
+    end;
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
+  end;
+end;
 
 procedure TCalibReportForm.FreeChart1Series;
 begin
@@ -761,6 +710,7 @@ begin
                 Pointer.Visible := True;
                 Pointer.Style := psCross;
                 Pointer.Pen.Width := 2;
+                Pointer.Pen.Color := MarkerColors[ColorIndex];
                 SeriesColor := MarkerColors[ColorIndex];
               finally
               end;

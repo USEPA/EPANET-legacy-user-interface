@@ -3,8 +3,8 @@ unit Fovmap;
 {-------------------------------------------------------------------}
 {                    Unit:    Fovmap.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit that contains a full-scale outline of the network     }
@@ -20,7 +20,8 @@ interface
 
 uses
   SysUtils, Windows, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, ExtCtrls, Uglobals, Umap, Uutils;
+  Forms, Dialogs, ExtCtrls, System.Types,
+  Uglobals, Umap, Uutils;
 
 type
   TOVMapForm = class(TForm)
@@ -36,6 +37,7 @@ type
     procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X,
       Y: Integer);
     procedure FormActivate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     OVmap    : Tmap;
@@ -71,6 +73,8 @@ procedure TOVMapForm.FormCreate(Sender: TObject);
 // OnCreate event handler for the overview map form.
 // Creates an OVmap object of class TMap (see Umap unit).
 //-------------------------------------------------------
+var
+  P: TPoint;
 begin
   OVmap := TMap.Create;
   with OVmap do
@@ -82,6 +86,15 @@ begin
   FocusRect := Rect(-1,-1,-1,-1);
   Draging := False;
   NeedsUpdating := False;
+
+// Position form at bottom right of Main form
+  with MainForm do
+  begin
+    P.x := Left + Width - 2;
+    P.Y := Top + Height - 2;
+  end;
+  Top := P.Y - Height;
+  Left := P.X - Width;
 end;
 
 procedure TOVMapForm.FormClose(Sender: TObject;
@@ -101,6 +114,13 @@ procedure TOVMapForm.FormDestroy(Sender: TObject);
 //--------------------------------------------------
 begin
   OVmap.Free;
+end;
+
+procedure TOVMapForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key = VK_F1
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 170);
 end;
 
 procedure TOVMapForm.FormResize(Sender: TObject);

@@ -4,13 +4,6 @@ This archive contains the source code for several 32-bit Delphi
 custom components. The components and the files used to install
 them are listed below.
 
---------------------------
-ChartDialog (ChartDlg.pas)
---------------------------
-Dialog control used to set various properties and options for 
-displaying charts with the Delphi TChart component. Documentation
-is provided in the file ChartDlg.doc.
-
 -------------------------------
 OpenTxtFileDialog (OpenDlg.pas)
 -------------------------------
@@ -26,12 +19,6 @@ PageSetupDialog (PgSetup.pas)
 -----------------------------
 Dialog control that selects a printer and page orientation, margins,
 and headers/footers.
-
---------------------
-ToolBar97 (TB97.pas)
---------------------
-Dockable toolbar control, patterned after the toolbars in MS Word 97.
-Documentation is provided in the file TB97.doc.
 
 -----------------------------
 VirtualListBox (VirtList.pas)

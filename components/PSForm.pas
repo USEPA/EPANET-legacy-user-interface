@@ -16,7 +16,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Printers, StdCtrls, ExtCtrls, ComCtrls, Math, PgSetup;
+  Printers, StdCtrls, ExtCtrls, ComCtrls, Math, System.UITypes, PgSetup;
 
 const
   MM = 'mm';
@@ -116,9 +116,9 @@ implementation
 procedure TPageSetupForm.FormCreate(Sender: TObject);
 begin
 //Set font size
-  Font.Size := 8;
+//  Font.Size := 8;
 // Get decimal character from Delphi's DecimalSeparator global variable
-  DecimalChar := DecimalSeparator;
+  DecimalChar := FormatSettings.DecimalSeparator;
 //Save location of page shape
   PageCenterX := MarginsBox.Left + MarginsBox.Width div 2;
   PageCenterY := PageShape.Top + PageShape.Height div 2;
@@ -271,7 +271,7 @@ procedure TPageSetupForm.EditKeyPress(Sender: TObject; var Key: Char);
 begin
   with Sender as TEdit do
   begin
-    if not (Key in ['0'..'9',DecimalChar,#8]) then Key := #0;
+    if not CharInSet(Key, ['0'..'9',DecimalChar,#8]) then Key := #0;
     if (Key = DecimalChar) and (Pos(Key,Text) > 0) then Key := #0;
   end;
 end;

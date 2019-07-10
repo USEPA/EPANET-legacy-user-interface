@@ -3,12 +3,8 @@ unit Umap;
 {-------------------------------------------------------------------}
 {                    Unit:    Umap.pas                              }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    6/1/00                                }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             3/1/01                                }
-{                             11/19/01                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that defines the TMap object. This object    }
@@ -20,7 +16,8 @@ unit Umap;
 interface
 
 uses Windows, Graphics, SysUtils, Dialogs, Forms, Classes,
-     Controls, Math, Uglobals, Uutils, Uinput, Uoutput, Dlegend;
+     Controls, Math, System.Types, System.UITypes,
+     Uglobals, Uutils, Uinput, Uoutput, Dlegend;
 
 const
   MAX_INT_COORD = 32767;
@@ -102,8 +99,6 @@ type
     function  RedrawBackdrop: Boolean;
     procedure Rescale(const NewDimensions: TMapDimensions);
     procedure Resize(const Rect: TRect);
-
-{*** Updated 12/29/00 ***}
     procedure ResizeWindow(const Rect: TRect);
     procedure ResizeBitmap(var aBitmap: TBitmap; const W,H: Integer);
 
@@ -299,7 +294,7 @@ begin
 
 // Set Canvas's font for ID/Value labeling
   Canvas.Font.Name := 'Arial';
-  Canvas.Font.Size := Options.NotationSize;      {*** Updated 3/1/01 ***}
+  Canvas.Font.Size := Options.NotationSize;
   Canvas.Font.Style := [];
   CharHeight := Canvas.TextHeight('[');
 
@@ -418,6 +413,7 @@ var
   size  : Integer;
   offset: Integer;
   e     : Single;
+  color : TColor;   {*** Added 5/11/18 ***}
 
 begin
 // Check if object falls within current display window
@@ -468,6 +464,21 @@ begin
     aLink := Link(ObjType,Index);
     SetLinkColor(ObjType,Index);
     size := SetLinkSize;
+
+    if Options.DispLinkBorder then
+    begin
+      color := Canvas.Pen.Color;
+      if color <> ForeColor then
+      begin
+        Canvas.Pen.Color := ForeColor;
+        if size = 4 then size := 3
+        else if size = 5 then size := 6;
+        Canvas.Pen.Width := size + 2;
+        DrawLink(P1, P2, aLink);
+        Canvas.Pen.Color := color;
+      end;
+    end;
+
     offset := size;
     Canvas.Pen.Width := size;
     DrawLink(P1,P2,aLink);
@@ -584,7 +595,6 @@ begin
     Poly[2] := Point(X+w+1,Y+Size+1);
     Poly[3] := Point(X+w+1,Y-w-1);
     Canvas.PolyLine(Poly);
-    //Canvas.Pen.Width := 1;
     Canvas.Rectangle(X-w, Y-Size, X+w+2, Y+Size+2);
   end
   else
@@ -1201,10 +1211,7 @@ function TMap.GetLabelRect(const Index: Integer): TRect;
 //------------------------------------------------------
 var
   H, W          : Integer;
-
-{*** Updated 11/19/01 ***}
   Xa, Ya        : Extended;
-
   aFont         : TFont;
   aLabel        : TMapLabel;
   Lsize         : TSize;
@@ -1245,8 +1252,6 @@ begin
 // Create a Font object to determine label's width & height
     aFont := TFont.Create;
     try
-      W := 10;
-      H := 10;
       aFont.Assign(Canvas.Font);
       Uinput.GetLabelFont(Index,Canvas.Font);
       Lsize := Canvas.TextExtent(Network.Lists[LABELS].Strings[Index]);
@@ -1471,7 +1476,6 @@ end;
 //                Map Resizing & Re-scaling Methods
 //===================================================================
 
-{*** Updated 12/29/00 ***}
 procedure TMap.Resize(const Rect: TRect);
 //----------------------------------------
 // Resizes map's display window & bitmaps.
@@ -1483,7 +1487,6 @@ begin
 end;
 
 
-{*** Updated 12/29/00 ***}
 procedure TMap.ResizeWindow(const Rect: TRect);
 begin
   with Window do
@@ -1497,7 +1500,6 @@ begin
 end;
 
 
-{*** Updated 12/29/00 ***}
 procedure TMap.ResizeBitmap(var aBitmap: TBitmap; const W,H: Integer);
 begin
   if aBitmap <> nil then

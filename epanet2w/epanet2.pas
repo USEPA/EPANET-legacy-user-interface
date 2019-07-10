@@ -129,8 +129,8 @@ const
  EN_SAVE       = 1;
  EN_INITFLOW   = 10;  { Re-initialize flow flag }
 
- function  ENepanet(F1: Pchar; F2: Pchar; F3: Pchar; F4: Pointer): Integer; stdcall;
- function  ENopen(F1: Pchar; F2: Pchar; F3: Pchar): Integer; stdcall;
+ function  ENepanet(F1: PAnsiChar; F2: PAnsiChar; F3: PAnsiChar; F4: Pointer): Integer; stdcall;
+ function  ENopen(F1: PAnsiChar; F2: PAnsiChar; F3: PAnsiChar): Integer; stdcall;
  function  ENsaveinpfile(F: Pchar): Integer; stdcall;
  function  ENclose: Integer; stdcall;
 

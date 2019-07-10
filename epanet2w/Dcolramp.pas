@@ -3,8 +3,8 @@ unit Dcolramp;
 {-------------------------------------------------------------------}
 {                    Unit:    Dcolramp.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit that contains a color ramp selection dialog box.      }

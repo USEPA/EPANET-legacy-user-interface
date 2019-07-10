@@ -3,8 +3,8 @@ unit Dcalib1;
 {-------------------------------------------------------------------}
 {                    Unit:    Dcalib1.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit containing a dialog form that obtains names of        }
@@ -135,7 +135,7 @@ begin
   if Length(fname) > 0 then
   begin
     CmdLine := 'Notepad ' + fname;
-    WinExec(PChar(CmdLine),SW_SHOWNORMAL);
+    WinExec(PAnsiChar(AnsiString(CmdLine)),SW_SHOWNORMAL);
   end;
 end;
 
@@ -185,7 +185,7 @@ end;
 
 procedure TCalibDataForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(178);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 178);
 end;
 
 end.

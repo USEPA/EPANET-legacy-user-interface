@@ -3,8 +3,8 @@ unit Dprefers;
 {-------------------------------------------------------------------}
 {                    Unit:    Dprefers.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box for setting program preferences.    }
@@ -14,7 +14,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Spin, StdCtrls, ComCtrls, FileCtrl, Uglobals, Uutils, ExtCtrls;
+  Spin, StdCtrls, ComCtrls, FileCtrl, ExtCtrls, System.UITypes,
+  Uglobals, Uutils;
 
 const
   MSG_NO_DIRECTORY = ' - directory does not exist.';
@@ -26,13 +27,9 @@ type
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
-    CheckBoldFonts: TCheckBox;
     CheckBlinking: TCheckBox;
     CheckFlyOvers: TCheckBox;
     CheckAutoBackup: TCheckBox;
-    Label5: TLabel;
-    EditTempDir: TEdit;
-    DirSelectBtn: TButton;
     Label1: TLabel;
     Label2: TLabel;
     NodeVarBox: TComboBox;
@@ -47,6 +44,7 @@ type
     Panel1: TPanel;
     Label6: TLabel;
     CheckConfirmDelete: TCheckBox;
+    CheckClearFileList: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure NodeVarSpinChange(Sender: TObject);
     procedure LinkVarSpinChange(Sender: TObject);
@@ -54,7 +52,6 @@ type
     procedure LinkVarBoxChange(Sender: TObject);
     procedure BtnOKClick(Sender: TObject);
     procedure BtnCancelClick(Sender: TObject);
-    procedure DirSelectBtnClick(Sender: TObject);
     procedure BtnHelpClick(Sender: TObject);
   private
     { Private declarations }
@@ -85,12 +82,10 @@ begin
   Uglobals.SetFont(self);
 
 // Initialize general preferences
-  CheckBoldFonts.Checked := BoldFonts;
   CheckBlinking.Checked := Blinking;
   CheckFlyOvers.Checked := FlyOvers;
   CheckAutoBackup.Checked := AutoBackup;
   CheckConfirmDelete.Checked := ConfirmDelete;
-  EditTempDir.Text := TempDir;
 
 // Assign items to node & link variable combo boxes
   for i := DEMAND to NODEQUAL do
@@ -163,71 +158,36 @@ begin
   ModalResult := mrCancel;
 end;
 
-procedure TPreferencesForm.DirSelectBtnClick(Sender: TObject);
-//-----------------------------------------------------------
-// OnClick handler for Select button that selects a
-// choice of Temporary Folder. Uses built-in Delphi
-// function SelectDirectory to display a directory
-// selection dialog box.
-//-----------------------------------------------------------
-var
-  s: String;
-begin
-  s := EditTempDir.Text;
-  if SelectDirectory(s,[sdAllowCreate,sdPerformCreate,sdPrompt],0) then
-    EditTempDir.Text := s;
-end;
-
 function TPreferencesForm.SetPreferences: Boolean;
 //------------------------------------------------------------
 // Transfers contents of form to program preference variables.
 //------------------------------------------------------------
 var
   j: Integer;
-  buffer: String;
 begin
-// Use default temporary directory if user has a blank entry
-  buffer := Trim(EditTempDir.Text);
-  if (Length(buffer) = 0) then
-  begin
-    TempDir := Uutils.GetTempFolder;
-    if TempDir = '' then TempDir := EpanetDir;
-  end
-
-// Otherwise check that user's directory choice exists
-  else
-  begin
-    if buffer[Length(buffer)] <> '\' then buffer := buffer + '\';
-    if DirectoryExists(buffer) then TempDir := buffer
-    else
-    begin
-      MessageDlg(buffer + MSG_NO_DIRECTORY, mtWARNING, [mbOK], 0);
-      EditTempDir.Text := TempDir;
-      PageControl1.ActivePage := TabSheet1;
-      EditTempDir.SetFocus;
-      Result := False;
-      Exit;
-    end;
-  end;
 
 // Save the other preferences to their respective global variables.
-  BoldFonts := CheckBoldFonts.Checked;
   Blinking := CheckBlinking.Checked;
   FlyOvers := CheckFlyOvers.Checked;
   AutoBackup := CheckAutoBackup.Checked;
   ConfirmDelete := CheckConfirmDelete.Checked;
   for j := DEMAND to NODEQUAL do NodeUnits[j].Digits := NodeDigits[j];
   for j := FLOW to LINKQUAL do LinkUnits[j].Digits := LinkDigits[j];
+
+// Clear Most Recently Used file list
+  if CheckClearFileList.Checked then
+    for j := 0 to MainForm.MRUList.Count-1 do MainForm.MRUList[j] := '';
+
   Result := True;
 end;
 
 procedure TPreferencesForm.BtnHelpClick(Sender: TObject);
+var
+  HC: Integer;
 begin
    with PageControl1 do
-     if ActivePage = TabSheet1 then
-       Application.HelpContext(137)
-     else
-       Application.HelpContext(142);
+     if ActivePage = TabSheet1 then HC := 137 else HC := 142;
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

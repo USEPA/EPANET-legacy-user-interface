@@ -3,37 +3,24 @@ unit Fbrowser;
 {-------------------------------------------------------------------}
 {                    Unit:    Fbrowser.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    6/1/00                                }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             3/1/01                                }
-{                             11/19/01                              }
-{                             12/8/01                               }
-{                             12/14/01                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that controls access to the pipe network         }
 {   database and selection of variables to view on the network      }
 {   map.                                                            }
-{                                                                   }
-{   NOTE: For the 11/19/01 update (version 2.00.09) the original    }
-{         VirtualListBox component in the VirtList unit was         }
-{         replaced with a new one, which uses an OnGetItem event    }
-{         instead of a OnDrawItem event to display its items.       }
 {-------------------------------------------------------------------}
 
 interface
 
 uses
   SysUtils, Windows, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls,
-{*** Updated 11/19/01 ***}
-{*** Updated 12/14/01 ***}
-  Xprinter, Uglobals, Uutils, VirtList, Grids;
+  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls, Grids,
+  System.Types, System.UITypes,
+  Xprinter, Uglobals, Uutils, VirtList;
 
 const
-{*** Updated 3/1/01 ***}
   TimeStat: array[1..4] of PChar =
      ('Average', 'Minimum', 'Maximum', 'Range');
 
@@ -84,12 +71,6 @@ type
     procedure ItemListBoxDblClick(Sender: TObject);
     procedure ItemListBoxMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-
-{*** Updated 11/19/01 ***}
-{OnDrawItem no longer an event for VirtualListBox component.}
-//    procedure ItemListBoxDrawItem(Control: TWinControl; Index: Integer;
-//      Rect: TRect; State: TOwnerDrawState);
-
     procedure BtnAddClick(Sender: TObject);
     procedure BtnDeleteClick(Sender: TObject);
     procedure BtnEditClick(Sender: TObject);
@@ -108,19 +89,14 @@ type
     procedure ItemListBoxKeyPress(Sender: TObject; var Key: Char);
     procedure ItemListBoxKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-
-{*** Updated 11/19/01 ***}
-{ This is the new OnGetItem handler for the VirtualListBox component. }
     procedure ItemListBoxGetItem(Sender: TObject; Index: Integer;
       var Value: String; var aColor: TColor);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 
   private
     { Private declarations }
     OldQualParam: TWaterQuality;
     function  GetLastNodes(var N1, N2: TNode): Boolean;
-    procedure PrintCurve(Destination: TDestination);
-    procedure PrintPattern(Destination: TDestination);
-    procedure PrintControls(Destination: TDestination);
     procedure RefreshTimeLegend;
     procedure UpdateVCRStatus;
   public
@@ -129,7 +105,6 @@ type
     procedure EnableTimeControls;
     procedure InitDataPage;
     procedure InitMapPage;
-    procedure Print(Destination: TDestination);
     procedure RefreshMap;
     procedure SetOptions;
     procedure UpdateBrowser(const ObjType: Integer; const Index: Integer);
@@ -182,6 +157,18 @@ begin
   OldQualParam := wqNone;
 end;
 
+
+procedure TBrowserForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  HC: Integer;
+begin
+  if Key = vk_F1 then
+  begin
+    if PageControl1.ActivePageIndex = 0 then HC := 158 else HC := 304;
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
+  end;
+end;
 
 procedure TBrowserForm.FormClose(Sender: TObject;
   var Action: TCloseAction);
@@ -280,7 +267,7 @@ begin
 
 // Ask for confirmation of deletion
   if ConfirmDelete then
-    if MessageDlg(TXT_DELETE_OBJECT,mtConfirmation,[mbYes,mbNo],0)
+    if Uutils.MsgDlg(TXT_DELETE_OBJECT,mtConfirmation,[mbYes,mbNo],MainForm)
       = mrNo then Exit;
 
 // Erase visual object from map
@@ -348,10 +335,6 @@ procedure TBrowserForm.ItemListBoxClick(Sender: TObject);
 // makes ItemListBox selection the new selected database object
 //--------------------------------------------------------------
 begin
-{*** Updated 12/8/01 ***}
-// Activate Select Object toolbar button
-//  MainForm.SelectorButtonClick;
-
 // Update Browser with selected item
   CurrentList := ObjectListBox.ItemIndex;
   with ItemListBox do
@@ -410,7 +393,6 @@ procedure TBrowserForm.ItemListBoxMouseDown(Sender: TObject;
 var
   i: Integer;
 begin
-{*** Updated 12/8/01 ***}
 // Activate Select Object toolbar button
   MainForm.SelectorButtonClick;
 
@@ -430,44 +412,6 @@ begin
   end;
 end;
 
-{*** Updated 11/19/01 ***}
-{ The following procedure has been replaced by the OnGetItem event }
-{ handler for the new version of the VitualListBox component.      }
-{
-procedure TBrowserForm.ItemListBoxDrawItem(Control: TWinControl;
-  Index: Integer; Rect: TRect; State: TOwnerDrawState);
-//---------------------------------------------------------------
-// OnDraw handler for ItemListBox -
-// draws ID label of object item in the listbox's display area.
-// This procedure is needed because ItemListBox is a custom
-// virtual listbox component.
-//---------------------------------------------------------------
-var
-  s: String;
-begin
-// Check for valid item index
-  if (Index < 0) then exit;
-  if Index >= Network.Lists[CurrentList].Count then
-  begin
-    showmessage(ObjectListBox.Items[CurrentList] + ' count exceeded (' +
-      IntToStr(Index) + ')');
-      exit;
-  end;
-
-// Get database ID label of item at current index
-  s := GetID(CurrentList,Index);
-
-// Draw label in Rect area reserved for this item
-  with (Control as TVirtualListBox).Canvas do
-  begin
-    FillRect(Rect);
-    TextOut(Rect.Left+2,Rect.Top,s);
-  end;
-end;
-}
-
-{*** Updated 11/19/01 ***}
-{ OnGetItem event handler for the new version of the VirtualListBox component.}
 procedure TBrowserForm.ItemListBoxGetItem(Sender: TObject; Index: Integer;
   var Value: String; var aColor: TColor);
 //--------------------------------------------------
@@ -834,14 +778,11 @@ procedure TBrowserForm.RefreshTimeLegend;
 var
   days : Double;
   aTime: TDateTime;
-
-  hours: Single;        {*** Updated 12/29/00 ***}
+  hours: Single;
   stime: String;
 begin
   try
     days := (Rstart + CurrentPeriod*Rstep) / 86400;
-
-{*** Updated 12/29/00 ***}
     if GetSingle(StartTime, hours) then
       stime := Uutils.GetTimeString(Round(hours*3600))
     else stime := StartTime;
@@ -994,234 +935,6 @@ begin
     else Exit;
   end;
   TimeListBoxClick(Sender);
-end;
-
-
-//=============================================================
-//                        Printing Routines
-//=============================================================
-
-procedure TBrowserForm.Print(Destination: TDestination);
-//------------------------------------------------------
-// Prints properties of current item selected in Browser
-//------------------------------------------------------
-begin
-  if CurrentList = PATTERNS then
-    PrintPattern(Destination)
-  else if CurrentList = CURVES then
-    PrintCurve(Destination)
-  else if CurrentList = CNTRLS then
-    PrintControls(Destination)
-  else
-  begin
-     BtnEditClick(Self);
-     PropEditForm.Print(Destination);
-  end;
-end;
-
-procedure TBrowserForm.PrintPattern(Destination: TDestination);
-//------------------------------------------------------------
-// Prints data for selected time pattern
-//------------------------------------------------------------
-var
-  i, index, m: Integer;
-  Pwidth: Single;
-  L: Single;
-  S: String;
-  pattern: TPattern;
-begin
-    with MainForm.thePrinter do
-    begin
-
-    // Begin print job
-      BeginJob;
-      SetDestination(Destination);
-      SetFontInformation('Times New Roman',11,[]);
-
-    // Print pattern ID & comment
-      index := CurrentItem[CurrentList];
-      with Network.Lists[PATTERNS] do
-      begin
-        S := TXT_PATTERN +  Strings[index];
-        PrintCenter(S);
-        NextLine;
-        pattern := TPattern(Objects[index]);
-        PrintCenter(pattern.Comment);
-        NextLine;
-      end;
-
-    // Create a 2-column table for the pattern data
-      Pwidth := GetPageWidth - PageLayout.LMargin - PageLayout.RMargin;
-      L := PageLayout.LMargin + (Pwidth - 2)/2;;
-      CreateTable(2);
-      SetTableStyle([sBorder, sVerticalGrid, sHorizontalGrid]);
-      SetColumnHeaderText(1,1,TXT_PERIOD);
-      SetColumnHeaderAlignment(1,jCenter);
-      SetColumnDimensions(1,L,1);
-      SetColumnHeaderText(2,1,TXT_MULTIPLIER);
-      SetColumnHeaderAlignment(2,jCenter);
-      SetColumnDimensions(2,L+1,1);
-
-    // Print the pattern data
-      BeginTable;
-      m := pattern.Multipliers.Count-1;
-      for i := 0 to m do
-      begin
-        PrintColumnCenter(1,IntToStr(i+1));
-        PrintColumnCenter(2,pattern.Multipliers[i]);
-        NextTableRow(True); //Disable automatic paging
-
-      // Check if we need to start a new page
-        if (IsPageEnd) and (i < m) then
-        begin
-          EndTable;
-          NewPage;
-          PrintCenter(S + TXT_CONTINUED);
-          NewLines(2);
-          BeginTable;
-        end;
-      end;
-      EndTable;
-      EndJob;
-  end;
-end;
-
-
-procedure TBrowserForm.PrintCurve(Destination: TDestination);
-//----------------------------------------------------------
-// Prints data for selected curve
-//----------------------------------------------------------
-var
-  i, index: Integer;
-  L,T     : Single;
-  W,H     : Single;
-  Pwidth,
-  Pheight : Single;
-  S       : String;
-  aCurve  : TCurve;
-  aPicture: TPicture;
-begin
-  with MainForm.thePrinter do
-  begin
-
-  // Begin job
-    BeginJob;
-    SetDestination(Destination);
-    SetFontInformation('Times New Roman',11,[]);
-
-  // Determine printable page width and height
-    Pwidth := GetPageWidth - PageLayout.LMargin - PageLayout.RMargin;
-    Pheight := GetPageHeight - PageLayout.TMargin - PageLayout.BMargin;
-
-  // Print curve ID & comment
-    index := CurrentItem[CurrentList];
-    with Network.Lists[CURVES] do
-    begin
-      S := TXT_CURVE +  Strings[Index];
-      PrintCenter(S);
-      NextLine;
-      aCurve := TCurve(Objects[index]);
-      PrintCenter(aCurve.Comment);
-      NextLine;
-    end;
-    NextLine;
-
-  // Create a 2-column table for curve data
-    L := PageLayout.LMargin + (Pwidth - 2)/2;;
-    CreateTable(2);
-    SetColumnHeaderText(1,1,TXT_XVALUES);
-    SetColumnHeaderAlignment(1,jCenter);
-    SetColumnDimensions(1,L,1);
-    SetColumnHeaderText(2,1,TXT_YVALUES);
-    SetColumnHeaderAlignment(2,jCenter);
-    SetColumnDimensions(2,L+1,1);
-    SetTableStyle([sBorder, sVerticalGrid, sHorizontalGrid]);
-
-  // Print the X,Y data to the table
-    BeginTable;
-    for i := 0 to aCurve.Xdata.Count - 1 do
-    begin
-      PrintColumnRight(1,aCurve.Xdata[i]);
-      PrintColumnRight(2,aCurve.Ydata[i]);
-      NextTableRow(False);
-    end;
-    EndTable;
-    NextLine;
-
-  // Load the Curve Editor into memory to access the curve's chart
-    with TCurveForm.Create(Application) do
-    try
-
-    // Load data into the Editor
-      LoadData(Index);
-      S := CurveEqn.Caption;
-      PrintCenter(S);
-      NextLine;
-
-    // Create aPicture to hold the graph of the curve (Chart1)
-      aPicture := TPicture.Create;
-      try
-
-      // Copy Chart1 to aPicture
-        Uutils.ChartToPicture(Chart1, aPicture);
-        Uutils.FitChartToPage(Chart1, Pwidth, Pheight, W, H);
-
-      // Make sure there is room for chart on current page
-        T := GetYpos + 0.5;
-        if (Pheight - T < H) then
-        begin
-          NewPage;
-          T := GetYPos + 0.5;
-        end;
-
-      // Center the chart and print it
-        L := PageLayout.LMargin + (Pwidth - W)/2;;
-        StretchGraphic( L, T, L+W, T+H, aPicture );
-      finally
-        aPicture.Free;
-      end;
-
-    finally
-      Free;
-    end;
-    EndJob;
-  end;
-end;
-
-
-procedure TBrowserForm.PrintControls(Destination: TDestination);
-//----------------------------------------------------------
-// Prints selected controls set (simple or rule-based)
-//----------------------------------------------------------
-var
-  i: Integer;
-  header: String;
-  aList : TStringlist;
-begin
-  if CurrentItem[CurrentList] = 0 then
-  begin
-    aList := Network.SimpleControls;
-    header := TXT_SIMPLE_CONTROLS
-  end
-  else
-  begin
-    aList := Network.RuleBasedControls;
-    header := TXT_RULE_CONTROLS;
-  end;
-  with MainForm.thePrinter, PageLayout do
-  begin
-    BeginJob;
-    SetDestination(Destination);
-    SetFontInformation('Courier New', 10, []);
-    PrintLeft(header);
-    NewLines(3);
-    with aList do
-      for i := 0 to Count - 1 do
-      begin
-        PrintLine(Strings[i]);
-      end;
-    EndJob;
-  end;
 end;
 
 end.

@@ -3,10 +3,8 @@ unit Uinifile;
 {-------------------------------------------------------------------}
 {                    Unit:    Uinifile.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             7/3/07                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that reads and writes data to the EPANET2W   }
@@ -24,6 +22,7 @@ procedure ReadDefaults;
 procedure SaveDefaults;
 procedure ReadMainFormSize;
 procedure SaveMainFormSize;
+procedure ReadStyleName;
 
 implementation
 
@@ -93,13 +92,12 @@ var
   i       : Integer;
   s       : String;
   fname   : String;
-  dname   : String;
+{ dname   : String;  DEPRECATED  }
 begin
 // Initialize graph options with factory settings
   GraphOptions := DefGraphOptions;
 
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -146,13 +144,10 @@ begin
 
   // Retrieve directory names
     fname := ReadString('Directories','DataDir',EpanetDir);
-    if (DirectoryExists(fname)) then SetCurrentDir(fname);
-    dname := ReadString('Directories','TempDir',TempDir);
-    if dname[Length(dname)] <> '\' then dname := dname + '\';
-    if (DirectoryExists(dname)) then TempDir := dname;
+    if (SysUtils.DirectoryExists(fname)) then SetCurrentDir(fname);
 
   // Retrieve general preferences
-    FontName := ReadString('Preferences','FontName','MS Sans Serif');
+    FontName := ReadString('Preferences','FontName','Segoe UI'); //'Tahoma'); //'MS Sans Serif');
     BoldFonts := ReadBool('Preferences','BoldFonts',False);
     Blinking := ReadBool('Preferences','Blinking',True);
     FlyOvers := ReadBool('Preferences','FlyOvers',True);
@@ -166,12 +161,8 @@ begin
   // Retrieve Property Editor parameters
     with PropEditForm do
     begin
-      Left := ReadInteger('Property Editor','Left',Left);
-      Top  := ReadInteger('Property Editor','Top',Top);
       Width := ReadInteger('Property Editor','Width',Width);
       Height := ReadInteger('Property Editor','Height',Height);
-      if Left > Screen.Width then Left := (Screen.Width - Width) div 2;
-      if Top  > Screen.Height then Top := (Screen.Height - Height) div 2;
       Editor.HeaderSplit := ReadInteger('Property Editor','HeaderSplit',
          Editor.HeaderSplit);
     end;
@@ -193,7 +184,6 @@ var
   s       : String;
 begin
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -240,7 +230,6 @@ begin
   // Save directory names
     GetDir(0,s);
     WriteString('Directories','DataDir',s);
-    WriteString('Directories','TempDir',TempDir);
 
   // Save general program preferences
     WriteBool('Preferences','BoldFonts',BoldFonts);
@@ -248,6 +237,7 @@ begin
     WriteBool('Preferences','FlyOvers',FlyOvers);
     WriteBool('Preferences','AutoBackup',AutoBackup);
     WriteBool('Preferences','ConfirmDelete',ConfirmDelete);
+    WriteString('Preferences', 'StyleName', StyleName);
 
   // Save MRU file names
     for i := 0 to 3 do WriteString('MRU',IntToStr(i),MainForm.MRUList[i]);
@@ -296,7 +286,6 @@ begin
   for i := JUNCS to CNTRLS do IDPrefix[i] := '';
 
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -348,7 +337,6 @@ var
   i: Integer;
 begin
 // Create the .INI file object
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
 
@@ -389,7 +377,6 @@ var
   L,T,W,H: Integer;
   S: TWindowState;
 begin
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
     with MainForm do
@@ -418,7 +405,6 @@ var
   R: TRect;
   S: Integer;
 begin
-{*** Modified 7/3/07 ***}
   with TIniFile.Create(IniFileDir + INIFILE) do
   try
     with MainForm do
@@ -434,6 +420,26 @@ begin
       WriteInteger('MainForm','Width',R.Right-R.Left);
       WriteInteger('MainForm','Height',R.Bottom-R.Top);
     end;
+  finally
+    Free;
+  end;
+end;
+
+
+procedure ReadStyleName;
+//-------------------------------------
+// Reads the name of a UI style to use
+//-------------------------------------
+begin
+  // Initialize UI style
+  Uglobals.StyleName := 'Windows';
+
+  // Create the .INI file object
+  with TIniFile.Create(IniFileDir + INIFILE) do
+  try
+    Uglobals.StyleName := ReadString('Preferences', 'StyleName', 'Windows');
+
+  // Free the .INI file object
   finally
     Free;
   end;

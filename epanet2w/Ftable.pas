@@ -3,8 +3,8 @@ unit Ftable;
 {-------------------------------------------------------------------}
 {                    Unit:    Ftable.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that displays a tabular listing of selected      }
@@ -29,8 +29,8 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, Grids, ClipBrd, ExtCtrls, StdCtrls, Xprinter,
-  Uglobals, Uutils, Printers;
+  Forms, Dialogs, Grids, ClipBrd, ExtCtrls, StdCtrls, System.UITypes,
+  System.Types, Printers, XPrinter, Uglobals, Uutils;
 
 const
   TXT_NETWORK_NODES = 'Network Table - Nodes';
@@ -53,13 +53,14 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormActivate(Sender: TObject);
-    procedure Grid1DrawCell(Sender: TObject; vCol, vRow: Longint;
+    procedure Grid1DrawCell(Sender: TObject; vCol, vRow: Integer;
       Rect: TRect; State: TGridDrawState);
     procedure Grid1MouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure Grid1MouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure ListBox1Exit(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     NumCols      : Integer;       //Number of columns in table
@@ -133,6 +134,14 @@ begin
 // Create list to hold indexes of row items (for sorting purposes)
   IndexList := TList.Create;
   TableOptions.TableType := NONE;
+end;
+
+
+procedure TTableForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Key = VK_F1)
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 263);
 end;
 
 

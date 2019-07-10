@@ -3,9 +3,8 @@ unit Fstatus;
 {-------------------------------------------------------------------}
 {                    Unit:    Fstatus.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             7/3/07                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   MDI child form that lists error/warning messages and the        }
@@ -17,7 +16,8 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, ComCtrls, Clipbrd, Xprinter, Uglobals, Uutils;
+  Forms, Dialogs, StdCtrls, ComCtrls, Clipbrd, System.UITypes,
+  Xprinter, Uglobals, Uutils;
 
 const
   MSG_1 = 'Unable to load more than ';
@@ -28,6 +28,7 @@ type
     FileViewer: TListBox;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormActivate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     procedure SetFont;
@@ -56,6 +57,13 @@ begin
   Action := caFree;
 end;
 
+
+procedure TStatusForm.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Key = VK_F1)
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 177);
+end;
 
 procedure TStatusForm.FormActivate(Sender: TObject);
 //---------------------------------------------------
@@ -96,7 +104,8 @@ begin
     Items.LoadFromFile(TempReportFile);
   except
     On E: Exception do
-      MessageDlg(MSG_1 + IntToStr(Items.Count) + MSG_2, mtWarning, [mbOK], 0);
+      Uutils.MsgDlg(MSG_1 + IntToStr(Items.Count) + MSG_2, mtWarning, [mbOK],
+      MainForm);
   end;
   if FileViewer.Items.Count >= 1 then FileViewer.ItemIndex := 0;
 end;
@@ -159,8 +168,6 @@ begin
 
     // If user supplies a file name then copy contents of FileViewer to it
       if Length(DestFileName) > 0 then
-
-{*** Use Delphi library version of CopyFile (7/3/07) ***}
         CopyFile(PChar(TempReportFile), PChar(DestFileName), FALSE)
 
     // Otherwise copy the contents into the Clipboard

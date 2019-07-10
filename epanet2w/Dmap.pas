@@ -3,9 +3,8 @@ unit Dmap;
 {-------------------------------------------------------------------}
 {                    Unit:    Dmap.pas                              }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             3/1/01                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box for changing Network Map display    }
@@ -73,6 +72,7 @@ type
 {*** Updated 3/1/01 ***}    
     NotationFontSize: TSpinEdit;
     Label1: TLabel;
+    LinkBorder: TCheckBox;
 
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word;
@@ -155,6 +155,7 @@ begin
 
     LinkSpin.Value := LinkSize;
     LinksBySize.Checked := DispLinksBySize;
+    LinkBorder.Checked := DispLinkBorder;
 
     NodeBorder.Checked := DispNodeBorder;
     JuncSymbols.Checked := DispJuncs;
@@ -211,6 +212,7 @@ begin
 
     LinkSize := LinkSpin.Value;
     DispLinksBySize := LinksBySize.Checked;
+    DispLinkBorder := LinkBorder.Checked;
 
     DispNodeBorder := NodeBorder.Checked;
     DispJuncs := JuncSymbols.Checked;
@@ -382,16 +384,21 @@ begin
 end;
 
 procedure TMapOptionsForm.BtnHelpClick(Sender: TObject);
+var
+  HC: Integer;
 begin
   case NoteBook1.PageIndex of
-    0: Application.HelpContext(193);
-    1: Application.HelpContext(194);
-    2: Application.HelpContext(195);
-    3: Application.HelpContext(198);
-    4: Application.HelpContext(196);
-    5: Application.HelpContext(197);
-    6: Application.HelpContext(199);
+    0: HC := 193;
+    1: HC := 194;
+    2: HC := 195;
+    3: HC := 198;
+    4: HC := 196;
+    5: HC := 197;
+    6: HC := 199;
+    else HC := 0;
   end;
+  if HC > 0
+  then HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

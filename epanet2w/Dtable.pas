@@ -3,9 +3,8 @@ unit Dtable;
 {-------------------------------------------------------------------}
 {                    Unit:    Dtable.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box used to select options for a Table. }
@@ -15,7 +14,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, checklst, ComCtrls, Uutils, Uglobals, Ftable, ExtCtrls;
+  StdCtrls, checklst, ComCtrls, ExtCtrls, System.UITypes,
+  Ftable, Uutils, Uglobals;
 
 const
   MSG_NO_NODE = 'There is no Node ';
@@ -494,7 +494,7 @@ var
   s: String;
 begin
   if (NextFilter > MAXFILTERS) then
-    MessageDlg(MSG_FILTER_LIMIT,mtWARNING,[mbOK],0)
+    Uutils.MsgDlg(MSG_FILTER_LIMIT,mtWARNING,[mbOK])
   else
   begin
     s := FilterValueBox.Text;
@@ -549,9 +549,9 @@ begin
   begin
     S := ObjectIDBox.Text;
     if (NodeSeriesBtn.Checked) and (not FindNode(S,i,j))
-    then MessageDlg(MSG_NO_NODE + S, mtError, [mbOK], 0)  // NODESERIES
+    then Uutils.MsgDlg(MSG_NO_NODE + S, mtError, [mbOK])  // NODESERIES
     else if (LinkSeriesBtn.Checked) and (not FindLink(S,i,j))
-    then MessageDlg(MSG_NO_LINK + S, mtError, [mbOK], 0) // LINKSERIES
+    then Uutils.MsgDlg(MSG_NO_LINK + S, mtError, [mbOK]) // LINKSERIES
     else ModalResult := mrOK;
   end
   else ModalResult := mrOK;
@@ -559,13 +559,17 @@ end;
 
 
 procedure TTableOptionsForm.HelpBtnClick(Sender: TObject);
+//----------------------------------------------
+// OnClick handler for the Help button.
+//----------------------------------------------
+var
+  HC: Integer;
 begin
   with PageControl1 do
-    if ActivePage = TableTypePage then
-      Application.HelpContext(264)
-    else if ActivePage = ColumnsPage then
-      Application.HelpContext(265)
-    else Application.HelpContext(266);
+    if ActivePage = TableTypePage then HC := 264
+    else if ActivePage = ColumnsPage then HC := 265
+    else HC := 266;
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HC);
 end;
 
 end.

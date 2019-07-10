@@ -1,8 +1,9 @@
+{ Component Name Changed to Avoid Conflict with VCL's TPageSetupDialog }
 {
-   TPageSetupDialog Component
+   TPageSetupDialogEx Component
    **************************
 
-   A Delphi component that implements a Page Setup Dialog box. 
+   A Delphi component that implements a Page Setup Dialog box.
    It can be used to:
    - select a printer
    - set the page orientation
@@ -17,7 +18,7 @@
        Enabled: Boolean          (True if footer/header is visible)
        Text: String              (Footer/header text)
     HelpContext: THelpContext    (Help context ID number)
-    Margins: TMargins            (Page margins)
+    PageMargins: TPageMargins    (Page margins)
        Left, Right,
        Top, Bottom: Single
     Measurements: TMeasurements  (Measurement units for margins)
@@ -39,7 +40,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  Printers;
+  Printers, Math, System.UITypes;
 
 const
   PRINTINGMSG = 'Printer is currently printing.';
@@ -50,7 +51,7 @@ type
   TPageNumbers  = (pnNone, pnUpperLeft, pnUpperCenter, pnUpperRight,
                    pnLowerLeft, pnLowerCenter, pnLowerRight);
 
-  TMargins = class(TPersistent)
+  TPageMargins = class(TPersistent)
   private
     FLeft   : Single;
     FRight  : Single;
@@ -76,18 +77,18 @@ type
     property Alignment: TAlignment read FAlignment write FAlignment default taLeftJustify;
   end;
 
-  TPageSetupDialog = class(TComponent)
+  TPageSetupDialogEx = class(TComponent)
   private
     FBoldFont:     Boolean;
     FFooter:       TPageCaption;
     FHeader:       TPageCaption;
     FHelpContext:  THelpContext;
-    FMargins:      TMargins;
+    FPageMargins:  TPageMargins;
     FMeasurements: TMeasurements;
     FPageNumbers:  TPageNumbers;
     FShowHFPage:   Boolean;
     FTrueTypeFont: Boolean;
-    procedure      SetMargins(Value: TMargins);
+    procedure      SetPageMargins(Value: TPageMargins);
     function       GetDefMeasurements: TMeasurements;
   protected
   public
@@ -99,7 +100,7 @@ type
     property Footer: TPageCaption read FFooter write FFooter;
     property Header: TPageCaption read FHeader write FHeader;
     property HelpContext: THelpContext read FHelpContext write FHelpContext;
-    property Margins: TMargins read FMargins write SetMargins;
+    property PageMargins: TPageMargins read FPageMargins write SetPageMargins;
     property Measurements: TMeasurements read FMeasurements write FMeasurements
                            default pmDefault;
     property PageNumbers: TPageNumbers read FPageNumbers write FPageNumbers
@@ -116,15 +117,17 @@ implementation
 
 uses PSForm;
 
+{$R 'PgSetup.dcr'}
+
 procedure Register;
 begin
-  RegisterComponents('EPA',[TPageSetupDialog]);
+  RegisterComponents('EPA',[TPageSetupDialogEx]);
 end;
 
-constructor TPageSetupDialog.Create(AOwner: TComponent);
+constructor TPageSetupDialogEx.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FMargins := TMargins.Create;
+  FPageMargins := TPageMargins.Create;
   FHeader  := TPageCaption.Create;
   FHeader.Text := '';
   FHeader.Enabled := True;
@@ -140,20 +143,20 @@ begin
   FMeasurements := pmDefault;
 end;
 
-destructor TPageSetupDialog.Destroy;
+destructor TPageSetupDialogEx.Destroy;
 begin
-  FMargins.Free;
+  FPageMargins.Free;
   FHeader.Free;
   FFooter.Free;
   inherited Destroy;
 end;
 
-procedure TPageSetupDialog.SetMargins(Value: TMargins);
+procedure TPageSetupDialogEx.SetPageMargins(Value: TPageMargins);
 begin
-  FMargins.Assign(Value);
+  FPageMargins.Assign(Value);
 end;
 
-function TPageSetupDialog.GetDefMeasurements: TMeasurements;
+function TPageSetupDialogEx.GetDefMeasurements: TMeasurements;
 //Get units of measurement for user's system
 var
   Buffer: PChar;
@@ -167,7 +170,7 @@ begin
   StrDispose(Buffer);
 end;
 
-function TPageSetupDialog.Execute: Boolean;
+function TPageSetupDialogEx.Execute: Boolean;
 var
   ucf: Single;
 begin
@@ -197,10 +200,10 @@ begin
       ucf := 1;
     with PageSetupForm do
     begin
-      MarginLeft := Margins.Left*ucf;
-      MarginRight := Margins.Right*ucf;
-      MarginTop := Margins.Top*ucf;
-      MarginBot := Margins.Bottom*ucf;
+      MarginLeft := PageMargins.Left*ucf;
+      MarginRight := PageMargins.Right*ucf;
+      MarginTop := PageMargins.Top*ucf;
+      MarginBot := PageMargins.Bottom*ucf;
       if ShowHFPage then begin
         TabSheet2.TabVisible := True;
         CheckHeaderEnabled.Checked := Header.Enabled;
@@ -245,10 +248,20 @@ begin
           end;
           PageNumbers := TPageNumbers(CBPageNumbers.ItemIndex);
         end;
-        Margins.Left := MarginLeft/ucf;
-        Margins.Right := MarginRight/ucf;
-        Margins.Top := MarginTop/ucf;
-        Margins.Bottom := MarginBot/ucf;
+        if ucf = 1 then
+        begin
+          PageMargins.Left := MarginLeft;
+          PageMargins.Right := MarginRight;
+          PageMargins.Top := MarginTop;
+          PageMargins.Bottom := MarginBot;
+        end
+        else
+        begin
+          PageMargins.Left := floor(MarginLeft/ucf);
+          PageMargins.Right := floor(MarginRight/ucf);
+          PageMargins.Top := floor(MarginTop/ucf);
+          PageMargins.Bottom := floor(MarginBot/ucf);
+        end;
         Result := True;
       end;
     end;

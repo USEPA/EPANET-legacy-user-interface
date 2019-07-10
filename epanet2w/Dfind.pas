@@ -3,11 +3,8 @@ unit Dfind;
 {-------------------------------------------------------------------}
 {                    Unit:    Dfind.pas                             }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             11/19/01                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box used to find a specific node or     }
@@ -18,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, Uglobals, Uutils;
+  StdCtrls, ExtCtrls, System.UITypes, Uglobals, Uutils;
 
 const
   TXT_NO_SUCH_OBJECT = 'There is no such object on the map';
@@ -73,6 +70,7 @@ procedure TFindForm.FormCreate(Sender: TObject);
 var
   P: TPoint;
 begin
+  Uglobals.SetFont(self);
   with MainForm do
   begin
     P.x := Left + (Width - ClientWidth) - 2;
@@ -148,7 +146,7 @@ begin
 
 // If not found then issue a message.
   else
-    MessageDlg(TXT_NO_SUCH_OBJECT,mtInformation,[mbOK],0);
+    Uutils.MsgDlg(TXT_NO_SUCH_OBJECT,mtInformation,[mbOK]);
   Edit1.SetFocus;
   Edit1.SelectAll;
 end;
@@ -205,7 +203,7 @@ begin
         ListBox1.Items.Add(GetID(i,j));
   end;
   if ListBox1.Items.Count = 0 then
-    MessageDlg(TXT_NO_SOURCE_NODES,mtInformation,[mbOK],0);
+    Uutils.MsgDlg(TXT_NO_SOURCE_NODES,mtInformation,[mbOK]);
 end;
 
 procedure TFindForm.UpdateMapDisplay;
@@ -231,7 +229,7 @@ begin
       if not (Map.GetNodePixPos(aNode1,P1))
       or not (Map.GetNodePixPos(aNode2,P2)) then
       begin
-        MessageDlg(TXT_LINK_NOT_ON_MAP, mtInformation, [mbOK], 0);
+        Uutils.MsgDlg(TXT_LINK_NOT_ON_MAP, mtInformation, [mbOK]);
         Exit;
       end;
       P.X := (P1.X + P2.X) div 2;
@@ -246,7 +244,7 @@ begin
       aNode1 := Node(FoundObject,FoundIndex);
       if not Map.GetNodePixPos(aNode1,P) then
       begin
-        MessageDlg(TXT_NODE_NOT_ON_MAP, mtInformation, [mbOK], 0);
+        Uutils.MsgDlg(TXT_NODE_NOT_ON_MAP, mtInformation, [mbOK]);
         Exit;
       end;
       Xf := aNode1.X;

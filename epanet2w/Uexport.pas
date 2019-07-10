@@ -3,11 +3,8 @@ unit Uexport;
 {-------------------------------------------------------------------}
 {                    Unit:    Uexport.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             3/1/01                                }
-{                             6/24/02                               }
-{                             2/14/08     (2.00.12)                 }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that exports network data to INP file.       }
@@ -195,8 +192,6 @@ begin
   Writeln(F);
 
   Writeln(F, '[LABELS]');
-
-{*** Updated 3/1/01 ***}
   Writeln(F, ';X-Coord           Y-Coord          Label & Anchor Node');
 
   slist := Network.Lists[LABELS];
@@ -209,8 +204,6 @@ begin
       s := '';
       if Anchor <> nil then s := Anchor.ID;
     end;
-
-{*** Updated 3/1/01 ***}
     Writeln(F, Format(' %-16f %-16f "%s" %-16s',
       [aMapLabel.X,aMapLabel.Y,slist[j],s]));
   end;
@@ -375,7 +368,7 @@ begin
     Writeln(F,'[TANKS]');
     Writeln(F,';ID              '#9'Elevation   '#9'InitLevel   '#9+
       'MinLevel    '#9'MaxLevel    '#9'Diameter    '#9'MinVol      '#9+
-        'VolCurve');
+        'VolCurve        '#9'Overflow');
     slist := Network.Lists[TANKS];
     n := slist.Count;
     if n > 0 then
@@ -384,14 +377,23 @@ begin
       begin
         with TNode(slist.Objects[i]) do
         begin
-          s := Data[TANK_MINVOL_INDEX];
-          if Length(Trim(s)) = 0 then s := '0';
-          Writeln(F,Format(' %-16s'#9'%-12s'#9'%-12s'#9'%-12s'#9'%-12s'#9+
-            '%-12s'#9'%-12s'#9'%-16s'#9';%s',
-              [slist[i],Data[TANK_ELEV_INDEX],Data[TANK_INITLVL_INDEX],
-                Data[TANK_MINLVL_INDEX],Data[TANK_MAXLVL_INDEX],
-                  Data[TANK_DIAM_INDEX], s, Data[TANK_VCURVE_INDEX],
-                    Data[COMMENT_INDEX]]));
+          s := Format(' %-16s'#9'%-12s'#9'%-12s'#9'%-12s'#9'%-12s'#9+'%-12s'#9,
+               [slist[i], Data[TANK_ELEV_INDEX], Data[TANK_INITLVL_INDEX],
+               Data[TANK_MINLVL_INDEX], Data[TANK_MAXLVL_INDEX],
+               Data[TANK_DIAM_INDEX]]);
+          if Length(Trim(Data[TANK_MINVOL_INDEX])) = 0
+          then s := s + '0           '#9
+          else s := s + Format('%-12s'#9, [Data[TANK_MINVOL_INDEX]]);
+          if SameText(Data[TANK_OVERFLOW_INDEX], 'Yes') then
+          begin
+            if Length(Trim(Data[TANK_VCURVE_INDEX])) = 0
+            then s := s + '*               '#9
+            else s := s + Format('-16s'#9, [Data[TANK_VCURVE_INDEX]]);
+            s := s + 'Yes'#9';' + Data[COMMENT_INDEX];
+          end
+          else s := s + Format('%-16s'#9';%s', [Data[TANK_VCURVE_INDEX],
+                        Data[COMMENT_INDEX]]);
+          Writeln(F, s);
         end;
       end;
     end;
@@ -639,8 +641,6 @@ begin
     with Network.Options do
     begin
       if Length(Trim(Data[BULK_ORDER_INDEX])) > 0 then
-
-{*** Updated 6/24/02 ***}
       begin
         Writeln(F,' Order Bulk            '#9,Data[BULK_ORDER_INDEX]);
         Writeln(F,' Order Tank            '#9,Data[BULK_ORDER_INDEX]);
@@ -704,7 +704,11 @@ begin
       Writeln(F,' Trials             '#9,Data[TRIALS_INDEX]);
       Writeln(F,' Accuracy           '#9,Data[ACCURACY_INDEX]);
 
-{*** Added for 2.00.12 ***}
+      if Uutils.GetSingle(Data[HEAD_ERROR_INDEX], v) and (v > 0)
+      then Writeln(F,' HEADERROR          '#9,Data[HEAD_ERROR_INDEX]);
+      if Uutils.GetSingle(Data[FLOW_CHANGE_INDEX], v) and (v > 0)
+      then Writeln(F,' FLOWCHANGE         '#9,Data[FLOW_CHANGE_INDEX]);
+
       Writeln(F,' CHECKFREQ          '#9,Data[CHECK_FREQ_INDEX]);
       Writeln(F,' MAXCHECK           '#9,Data[MAX_CHECK_INDEX]);
       Writeln(F,' DAMPLIMIT          '#9,Data[DAMP_LIMIT_INDEX]);
@@ -716,6 +720,15 @@ begin
       if Length(Trim(Data[GLOBAL_PAT_INDEX])) > 0 then
       Writeln(F,' Pattern            '#9,Data[GLOBAL_PAT_INDEX]);
       Writeln(F,' Demand Multiplier  '#9,Data[DEMAND_MULT_INDEX]);
+
+      if CompareText(Data[DEMAND_MODEL_INDEX], 'PDA') = 0 then
+      begin
+        Writeln(F,' Demand Model       '#9,Data[DEMAND_MODEL_INDEX]);
+        Writeln(F,' Minimum Pressure   '#9,Data[MIN_PRESSURE_INDEX]);
+        Writeln(F,' Required Pressure  '#9,Data[REQ_PRESSURE_INDEX]);
+        Writeln(F,' Pressure Exponent  '#9,Data[PRESSURE_EXP_INDEX]);
+      end;
+
       Writeln(F,' Emitter Exponent   '#9,Data[EMITTER_EXP_INDEX]);
       if UpperCase(Trim(Data[QUAL_PARAM_INDEX])) = 'TRACE' then
       Writeln(F,' Quality            '#9'Trace ',Data[TRACE_NODE_INDEX])

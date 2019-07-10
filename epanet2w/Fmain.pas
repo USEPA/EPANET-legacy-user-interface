@@ -3,12 +3,8 @@ unit Fmain;
 {-------------------------------------------------------------------}
 {                    Unit:    Fmain.pas                             }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    6/1/00                                }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             3/1/01                                }
-{                             8/15/07   (2.00.11)                   }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi form unit containing main unit for EPANET2W.             }
@@ -30,8 +26,9 @@ interface
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
   Forms, Dialogs, Menus, ExtCtrls, Buttons, StdCtrls, ComCtrls,
-  Printers, PgSetup, OpenDlg, TB97, ChartDlg, Xprinter, Uglobals,
-  Uutils, ExtDlgs, ImgList;
+  ExtDlgs, ImgList, System.ImageList, System.UITypes, Vcl.ToolWin,
+  Printers, System.IOUtils,
+  PgSetup, OpenDlg, Xprinter, Uglobals, Uutils;
 
 const
   MSG_NO_MAP_FILE = 'Could not read map file ';
@@ -171,7 +168,6 @@ type
     MnuHelp: TMenuItem;
       MnuHelpTopics: TMenuItem;
       MnuHelpUnits: TMenuItem;
-      MnuHelpWhatsNew: TMenuItem;
       MnuHelpTutorial: TMenuItem;
       N4: TMenuItem;
       MnuAbout: TMenuItem;
@@ -183,42 +179,8 @@ type
     OpenPictureDialog: TOpenPictureDialog;
     SaveDialog: TSaveDialog;
     FontDialog: TFontDialog;
-    PageSetupDialog: TPageSetupDialog;
-    ChartDialog: TChartDialog;
     ImageList: TImageList;
 
-    Dock971: TDock97;
-    StdToolBar: TToolbar97;
-      TBNew: TToolbarButton97;
-      TBOpen: TToolbarButton97;
-      TBSave: TToolbarButton97;
-      TBPrint: TToolbarButton97;
-      ToolbarSep971: TToolbarSep97;
-      TBCopy: TToolbarButton97;
-      TBDelete: TToolbarButton97;
-      TBFind: TToolbarButton97;
-      ToolbarSep972: TToolbarSep97;
-      TBRun: TToolbarButton97;
-      ToolbarSep973: TToolbarSep97;
-      TBQuery: TToolbarButton97;
-      TBGraph: TToolbarButton97;
-      TBTable: TToolbarButton97;
-      TBOptions: TToolbarButton97;
-    MapToolBar: TToolbar97;
-      ToolButton1: TToolbarButton97;
-      ToolButton2: TToolbarButton97;
-      ToolButton3: TToolbarButton97;
-      ToolButton4: TToolbarButton97;
-      ToolButton5: TToolbarButton97;
-      ToolButton6: TToolbarButton97;
-      ToolButton7: TToolbarButton97;
-      ToolButton8: TToolbarButton97;
-      ToolButton9: TToolbarButton97;
-      ToolButton10: TToolbarButton97;
-      ToolButton11: TToolbarButton97;
-      ToolButton12: TToolbarButton97;
-      ToolButton13: TToolbarButton97;
-      ToolbarSep974: TToolbarSep97;
     ProgressPanel: TPanel;
       ProgressBar: TProgressBar;
     StatusPanel: TPanel;
@@ -229,10 +191,44 @@ type
       StatusBarPanel5: TPanel;
       RunStatusBox: TPaintBox;
     thePrinter: TPrintControl;
-    ToolButton14: TToolbarButton97;
+    ControlBar1: TControlBar;
+    StdToolBar: TToolBar;
+    MapToolBar: TToolBar;
+    TBNew: TToolButton;
+    TBOpen: TToolButton;
+    TBSave: TToolButton;
+    TBPrint: TToolButton;
+    TBSep1: TToolButton;
+    TBCopy: TToolButton;
+    TBDelete: TToolButton;
+    TBFind: TToolButton;
+    TBSep2: TToolButton;
+    TBRun: TToolButton;
+    TBSep3: TToolButton;
+    TBQuery: TToolButton;
+    TBGraph: TToolButton;
+    TBTable: TToolButton;
+    TBOptions: TToolButton;
+    ImageList1: TImageList;
+    ToolButton1: TToolButton;
+    ToolButton14: TToolButton;
+    ImageList2: TImageList;
+    ToolButton2: TToolButton;
+    ToolButton3: TToolButton;
+    ToolButton4: TToolButton;
+    ToolButton5: TToolButton;
+    ToolButton13: TToolButton;
+    TBSep4: TToolButton;
+    ToolButton6: TToolButton;
+    ToolButton7: TToolButton;
+    ToolButton8: TToolButton;
+    ToolButton9: TToolButton;
+    ToolButton10: TToolButton;
+    ToolButton11: TToolButton;
+    ToolButton12: TToolButton;
+    PageSetupDialog: TPageSetupDialogEx;
 
     procedure FormCreate(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 
@@ -303,7 +299,6 @@ type
     procedure MnuArrangeClick(Sender: TObject);
     procedure MnuCloseAllClick(Sender: TObject);
     procedure MnuHelpTopicsClick(Sender: TObject);
-    procedure MnuHelpWhatsNewClick(Sender: TObject);
     procedure MnuHelpUnitsClick(Sender: TObject);
     procedure MnuHelpTutorialClick(Sender: TObject);
     procedure MnuAboutClick(Sender: TObject);
@@ -319,6 +314,7 @@ type
     procedure OpenTextFileDialogPreview(Sender: TObject; Fname: String;
       var S: String; var WW: Boolean);
     procedure TBOptionsClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
     procedure ClearAll;
@@ -392,18 +388,17 @@ begin
 // Assign various directories
   EpanetDir := ExtractFilePath(Application.ExeName);
   WindowsDir := Uutils.GetWindowsDir;
-
-{*** Added 7/3/07 ***}
   IniFileDir := Uutils.GetAppDataDir('EPANET', EpanetDir);
   RenameFile(EpanetDir+INIFILE, IniFileDir+INIFILE);
 
   Application.HelpFile := EpanetDir + HLPFILE;
-  TempDir := Uutils.GetTempFolder;
+  TempDir := System.IOUtils.TPath.GetTempPath;
   if TempDir = '' then TempDir := EpanetDir;
 
 // Use '.' as decimal separator
 // (DecimalSeparator is a built-in Delphi global variable)
-  DecimalSeparator := '.';
+  Application.UpdateFormatSettings := false;
+  FormatSettings.DecimalSeparator := '.';
 
 // Create most-recently-used file lists
   MRUList := TStringList.Create;
@@ -447,16 +442,11 @@ begin
   HasChanged := False;
   ToolButton1.Down := True;
 
-// Create auxilary forms
+// Create Property Editor form
   PropEditForm := TPropEditForm.Create(self);
-  QueryForm := TQueryForm.Create(self);
-  FindForm := TFindForm.Create(self);
-  OVMapForm := TOVMapForm.Create(self);
 
 // Retrieve preferences from .INI file
 // (Must have created PropEditForm first)
-{*** Modified 7/3/07 ***}
-  IniLoadToolbarPositions(self, IniFileDir+INIFILE);
   Uinifile.ReadMainFormSize;
   Uinifile.ReadIniFile;
   Uinifile.ReadDefaults;
@@ -475,32 +465,31 @@ begin
 
 // Prevent form from repainting itself for now
   LockWindowUpdate(Handle);
+
+// Enable only for testing
+  //ReportMemoryLeaksOnShutdown := True;
 end;
 
 
-procedure TMainForm.FormActivate(Sender: TObject);
+procedure TMainForm.FormShow(Sender: TObject);
 //-----------------------------------------------------
-// Main form's OnActivate handler.
-// Creates Browser and Map forms when first activated.
+// Main form's OnShow handler.
+// Creates Browser and Map forms
 //-----------------------------------------------------
 begin
-//
-  if not Assigned(BrowserForm) then
-  begin
-  // Create Browser & Map child forms
-    BrowserForm := TBrowserForm.Create(self);
-    MapForm := TMapForm.Create(self);
-    MapForm.SetPanelPos;
-    MapForm.RedrawOnResize := True;
+  if Assigned(BrowserForm) and Assigned(MapForm) then exit;
+  BrowserForm := TBrowserForm.Create(self);
+  MapForm := TMapForm.Create(self);
+  MapForm.SetPanelPos;
+  MapForm.RedrawOnResize := True;
+
+  // Allow form to repaint itself
+  LockWindowUpdate(0);
 
   // Open file if one provided on command line,
   // otherwise simulate a click on File|New
-    if ParamCount >= 1 then OpenFile(Sender, ParamStr(1))
-    else MnuNewClick(Sender);
-
-  // Allow form to repaint itself
-    LockWindowUpdate(0);
-  end;
+  if ParamCount >= 1 then OpenFile(Sender, ParamStr(1))
+  else MnuNewClick(Sender);
 end;
 
 
@@ -511,25 +500,14 @@ procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
 var
   i: Integer;
 begin
-// Clear any current output results
-  CloseForms;
-  Uoutput.ClearOutput;
-  DeleteTempFiles;
-
 // Save preferences to .INI file
   Uinifile.SaveIniFile;
   Uinifile.SaveMainFormSize;
 
-{*** Modified 7/3/07 ***}
-  IniSaveToolbarPositions(self, IniFileDir+INIFILE);
-  
-// Free created forms
-  MapForm.Free;
-  BrowserForm.Free;
-  OVMapForm.Free;
-  FindForm.Free;
-  QueryForm.Free;
-  PropEditForm.Free;
+// Clear any current output results
+  CloseForms;
+  Uoutput.ClearOutput;
+  DeleteTempFiles;
 
 // Free memory allocated for network database
   Network.Clear;
@@ -577,9 +555,7 @@ begin
       (ActiveMDIChild is TTableForm) or
       (ActiveMDIChild is TGraphForm) or
       (ActiveMDIChild is TContourForm) or
-      (ActiveMDIChild is TMapForm) or
-      ((ActiveMDIChild is TBrowserForm) and
-       (CurrentItem[CurrentList] >= 0));
+      (ActiveMDIChild is TMapForm);
     MnuPrintPreview.Enabled := MnuPrint.Enabled;
   end;
 
@@ -720,7 +696,7 @@ begin
         MapForm.RedrawMap;
         OVMapForm.Rescale;
       end
-      else MessageDlg(Msg_NO_MAP_FILE + Filename, mtError, [mbOK], 0);
+      else Uutils.MsgDlg(Msg_NO_MAP_FILE + Filename, mtError, [mbOK]);
     end;
   end;
 end;
@@ -802,8 +778,8 @@ begin
       if ExtractFileExt(Filename) = '' then Filename := Filename + '.inp';
       if (CompareText(InputFileName,Filename) = 0)
       and ReadOnlyFlag
-      then MessageDlg(ExtractFileName(InputFileName) +
-           MSG_READONLY, mtInformation, [mbOK], 0)
+      then Uutils.MsgDlg(ExtractFileName(InputFileName) +
+           MSG_READONLY, mtInformation, [mbOK])
       else Uexport.ExportDataBase(Filename,True)
     end;
   end;
@@ -819,22 +795,20 @@ begin
   begin
   // Transfer current margin settings from PageLayout to
   // the PageSetupDialog component
-    Margins.Left   := LMargin;
-    Margins.Right  := RMargin;
-    Margins.Top    := TMargin;
-    Margins.Bottom := BMargin;
-    PageSetupDialog.BoldFont := BoldFonts;
+    PageMargins.Left   := LMargin;
+    PageMargins.Right  := RMargin;
+    PageMargins.Top    := TMargin;
+    PageMargins.Bottom := BMargin;
     Printer.Orientation := TPrinterOrientation(Orientation);
 
   // Execute the dialog
     if PageSetupDialog.Execute then
     begin
-
     // Transfer new margins to PageLayout
-      LMargin := Margins.Left;
-      RMargin := Margins.Right;
-      TMargin := Margins.Top;
-      BMargin := Margins.Bottom;
+      LMargin := PageMargins.Left;
+      RMargin := PageMargins.Right;
+      TMargin := PageMargins.Top;
+      BMargin := PageMargins.Bottom;
 
     // Setup the printed page again
       Orientation := Ord(Printer.Orientation);
@@ -881,9 +855,7 @@ begin
     else if ActiveMDIChild is TCalibReportForm then
       TCalibReportForm(ActiveMDIChild).Print(Dest)
     else if ActiveMDIChild is TEnergyForm then
-      TEnergyForm(ActiveMDIChild).Print(Dest)
-    else if ActiveMDIChild is TBrowserForm then
-      TBrowserForm(ActiveMDIChild).Print(Dest);
+      TEnergyForm(ActiveMDIChild).Print(Dest);
 end;
 
 
@@ -891,24 +863,12 @@ procedure TMainForm.MnuPreferencesClick(Sender: TObject);
 //----------------------------------------------------------------
 // Displays Preferences dialog box when File|Preferences selected
 //----------------------------------------------------------------
-var
-  OldBoldFonts: Boolean;
 begin
-  OldBoldFonts := BoldFonts;
   with TPreferencesForm.Create(self) do
   try
     if ShowModal = mrOK then MapForm.RedrawMap;
   finally
     Free;
-  end;
-  if OldBoldFonts <> BoldFonts then
-  begin
-    Uglobals.SetFont(MainForm);
-    Uglobals.SetFont(BrowserForm);
-    Uglobals.SetFont(PropEditForm);
-    MapForm.NodeLegendPanel.Refresh;
-    MapForm.LinkLegendPanel.Refresh;
-    RefreshForms;
   end;
 end;
 
@@ -932,7 +892,6 @@ procedure TMainForm.MnuEditClick(Sender: TObject);
 //----------------------------------------------------
 begin
 // Group editing applies only if fenceline drawn on map
-{*** Updated on 7/30/00 ***}
   MnuGroupEdit.Enabled := (Not MapForm.Linking) and
                           (MapForm.NumFencePts > 0);
 
@@ -1055,8 +1014,6 @@ begin
   MnuBackdropUnload.Enabled := EnableFlag;
   MnuBackdropAlign.Enabled := EnableFlag;
   MnuBackdropShow.Enabled := EnableFlag;
-
-{*** Updated 12/29/00 ***}
   MapForm.PopupBackdrop.Checked := MapBackdrop.Visible;
 end;
 
@@ -1432,7 +1389,7 @@ procedure TMainForm.MnuReportEnergyClick(Sender: TObject);
 //--------------------------------------------------------
 begin
 // No report if no pumps in network
-  if (Npumps = 0) then MessageDlg(MSG_NO_PUMPS, mtInformation, [mbOK], 0)
+  if (Npumps = 0) then Uutils.MsgDlg(MSG_NO_PUMPS, mtInformation, [mbOK], self)
 
 // Check if Energy Report form already exists
   else if FormExists('EnergyForm') then Exit
@@ -1460,13 +1417,14 @@ begin
     VarType := 0;
     ObjectType := 0;
     Period := 0;
-    Items := nil;
+    Items := TStringList.Create;
   end;
   with TGraphForm.Create(self) do
   try
     if CreateGraph(GraphSelection) then Show
     else Close;
   finally
+    GraphSelection.Items.Free;
   end;
 end;
 
@@ -1486,7 +1444,7 @@ begin
   with TCalibOptionsForm.Create(self) do
   try
     if VariablesList.Items.Count = 0 then
-      MessageDlg(MSG_NO_CALIB_DATA, mtInformation, [mbOK], 0)
+      Uutils.MsgDlg(MSG_NO_CALIB_DATA, mtInformation, [mbOK], self)
     else if ShowModal = mrOK then GetOptions(RptType, RptVar)
   finally
     Free;
@@ -1601,7 +1559,7 @@ var
   DockHeight: Integer;
 begin
 // Account for height of Toolbars
-  if Dock971.Visible then DockHeight := Dock971.Height
+  if ControlBar1.Visible then DockHeight := ControlBar1.Height
   else DockHeight := 0;
 
 // Arrange all MDI child windows
@@ -1669,7 +1627,6 @@ begin
 end;
 
 
-{*** Updated 3/1/01 ***}
 procedure TMainForm.TBOptionsClick(Sender: TObject);
 //--------------------------------------------------
 // OnClick handler for Options toolbar button.
@@ -1718,12 +1675,12 @@ procedure TMainForm.ToolButton1Click(Sender: TObject);
 //    6-12     0-6   Activate Add Object tool
 //----------------------------------------------------
 begin
-  TToolbarButton97(Sender).Down := True;
+  TToolButton(Sender).Down := True;
   with MapForm do
   begin
     Show;
     SetFocus;
-    ToolButtonClick(TToolbarButton97(Sender).Tag);
+    ToolButtonClick(TToolButton(Sender).Tag);
   end;
 end;
 
@@ -1802,7 +1759,7 @@ begin
   Index := TMenuItem(Sender).Tag;
   Fname := MRUList[Index];
   if not FileExists(Fname) then
-    MessageDlg(MSG_NO_INPUT_FILE, mtInformation, [mbOK], 0)
+    Uutils.MsgDlg(MSG_NO_INPUT_FILE, mtInformation, [mbOK])
   else if SaveFileDlg(Sender) <> mrCancel then
   begin
     ReadOnlyFlag := (HasAttr(Fname, faReadOnly));
@@ -1915,7 +1872,7 @@ begin
 
 // Update variable units & Browser's map page
   Uinput.UpdateAllUnits;
-  AutoLength := False;    {*** Updated 12/29/00 ***}
+  AutoLength := False;
   ShowAutoLengthStatus;
   BrowserForm.InitMapPage;
 
@@ -1946,8 +1903,8 @@ begin
   if  (Length(MapBackdrop.Filename) > 0)
   and (not FileExists(MapBackdrop.Filename))then
   begin
-    if MessageDlg(MSG_NO_BACKDROP + MapBackdrop.Filename + MSG_FIND_BACKDROP,
-    mtError, [mbYes,mbNo],0) = mrYes then
+    if Uutils.MsgDlg(MSG_NO_BACKDROP + MapBackdrop.Filename + MSG_FIND_BACKDROP,
+    mtError, [mbYes,mbNo]) = mrYes then
     begin
       with OpenPictureDialog do
       begin
@@ -1968,7 +1925,7 @@ begin
 // Have user confirm the save operation
   if not ReadOnlyFlag and HasChanged then
   begin
-    Result := MessageDlg(TXT_SAVE_CHANGES,mtConfirmation,mbYesNoCancel,0);
+    Result := Uutils.MsgDlg(TXT_SAVE_CHANGES,mtConfirmation,mbYesNoCancel, self);
     if Result = mrYes then MnuSaveClick(Sender);
   end
   else Result := mrNo;
@@ -1986,8 +1943,8 @@ begin
 // Check if project file is read-only
   if ReadOnlyFlag
   and (CompareText(Fname,InputFileName) = 0)
-  then MessageDlg(
-    ExtractFileName(InputFileName) + MSG_READONLY, mtInformation, [mbOK], 0)
+  then Uutils.MsgDlg(
+    ExtractFileName(InputFileName) + MSG_READONLY, mtInformation, [mbOK])
 
 // Save project under new name
   else
@@ -2036,7 +1993,7 @@ begin
 
 // Reset printed page layout
   InitPageLayout;
-  
+
 // Initialize current item and next ID
 // number for each object category
   for i := JUNCS to CURVES do
@@ -2243,10 +2200,7 @@ begin
     PageNumbers := pnLowerRight;
   end;
   TitleAsHeader := True;
-
-{*** Updated 12/29/00 ***}
   Orientation := Ord(poPortrait);
-
 end;
 
 
@@ -2258,12 +2212,8 @@ var
   Y: Single;
   Justify: TJustify;
 begin
-{*** Updated 12/29/00 ***}
   if Printer.Printers.Count > 0 then with thePrinter do
-
   begin
-
-{*** Updated 12/29/00 ***}
   // Set printer orientation
     SetOrientation(TPrinterOrientation(Orientation));
 
@@ -2477,27 +2427,20 @@ end;
 
 procedure TMainForm.MnuHelpTopicsClick(Sender: TObject);
 begin
-  Application.HelpCommand(HELP_FINDER, 0);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_DISPLAY_TOC, 0);
 end;
 
 procedure TMainForm.MnuHelpUnitsClick(Sender: TObject);
 begin
   if UnitSystem = usUS then
-    Application.HelpContext(293)
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 293)
   else
-    Application.HelpContext(308);
-end;
-
-procedure TMainForm.MnuHelpWhatsNewClick(Sender: TObject);
-begin
-  Application.HelpContext(159);
+    HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 308)
 end;
 
 procedure TMainForm.MnuHelpTutorialClick(Sender: TObject);
 begin
-  Application.HelpFile := EpanetDir + TUTORFILE;
-  Application.HelpCommand(HELP_CONTENTS,0);
-  Application.HelpFile := EpanetDir + HLPFILE;
+  HtmlHelp(GetDesktopWindow, EpanetDir + TUTORFILE, HH_DISPLAY_TOC, 0);
 end;
 
 end.

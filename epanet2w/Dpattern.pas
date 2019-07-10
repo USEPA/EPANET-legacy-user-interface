@@ -3,8 +3,8 @@ unit Dpattern;
 {-------------------------------------------------------------------}
 {                    Unit:    Dpattern.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit containing a Time Pattern Editor dialog box.          }
@@ -14,8 +14,9 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, Buttons, Grids, ExtCtrls,
-  Uglobals, Uutils, TeEngine, Series, TeeProcs, Chart;
+  Forms, Dialogs, StdCtrls, Buttons, Grids, ExtCtrls, System.UITypes,
+  VCLTee.TeEngine, VCLTee.Series, VCLTee.TeeProcs, VCLTee.Chart,
+  VclTee.TeeGDIPlus, Uglobals, Uutils;
 
 const
   MAXPERIODS = 24;
@@ -34,7 +35,6 @@ const
 
 type
   TPatternForm = class(TForm)
-    Bevel1: TBevel;
     Label1: TLabel;
     Label2: TLabel;
     PatternID: TEdit;
@@ -293,7 +293,7 @@ begin
     begin
       msg := TXT_REPLACE_ALL + OldID +
              TXT_REPLACE_WITH + PatternID.Text + '?';
-      if MessageDlg(msg, mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+      if Uutils.MsgDlg(msg, mtConfirmation, [mbYes, mbNo]) = mrYes then
         UpdateIDs(PatternID.Text);
     end;
     ModalResult := mrOK;
@@ -483,7 +483,7 @@ end;
 
 procedure TPatternForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(234);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 234);
 end;
 
 end.

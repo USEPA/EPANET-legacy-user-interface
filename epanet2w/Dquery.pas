@@ -3,9 +3,8 @@ unit Dquery;
 {-------------------------------------------------------------------}
 {                    Unit:    Dquery.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {  Form unit with a dialog box for performing a Map Query           }

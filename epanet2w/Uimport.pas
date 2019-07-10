@@ -3,12 +3,8 @@ unit Uimport;
 {-------------------------------------------------------------------}
 {                    Unit:    Uimport.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/30/00                               }
-{                             9/7/00                                }
-{                             11/19/01                              }
-{                             6/24/02                               }
-{                             2/14/08   (2.00.12)                   }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that imports network database files, map     }
@@ -17,7 +13,9 @@ unit Uimport;
 
 interface
 
-uses Classes, Forms, Controls, Dialogs, SysUtils, Uutils, Uglobals;
+uses
+ Classes, Forms, Controls, Dialogs, SysUtils, System.UITypes, Math,
+ Uutils, Uglobals;
 
 const
   MSG_INVALID_FILE = ' is not a valid EPANET data file.';
@@ -63,31 +61,31 @@ const
      '[DIAMETERS',  {28: Diameters}
      '[TAGS');      {29: Tags}
 
-{***  Modified for 2.00.12  ***}
-  OptionWords : array[0..20] of PChar =
+  OptionWords : array[0..23] of PChar =
     ('UNIT',      {0: Flow Units}
-     'HEAD',      {1: Headloss Formula}
+     'HEAD',      {1: Headloss Formula or Head Error}
      'SPEC',      {2: Specific Gravity}
      'VISC',      {3: Viscosity}
      'TRIA',      {4: Trials}
      'ACCU',      {5: Accuracy}
      'UNBA',      {6: Unbalanced}
      'PATT',      {7: Pattern}
-     'DEMA',      {8: Demand Multiplier}
+     'DEMA',      {8: Demand Multiplier or Demand Model}
      'EMIT',      {9: Emitter Exponent}
      'STAT',      {10: Status Report}
      'QUAL',      {11: Quality}
-     'PRES',      {12: Pressure Units}
+     'PRES',      {12: Pressure Units or Pressure Exponent}
      'DIFF',      {13: Diffusivity}
      '',          {14: blank}
      'TOLE',      {15: Tolerance}
      'SEGM',      {16: Segments}
      'MAP',       {17: Map File}
-
-{*** Added for 2.00.12 ***}
-     'CHEC',      {18: CHECKFREQ}
-     'MAXC',      {19: MAXCHECK}
-     'DAMP');     {20: DAMPLIMIT}
+     'FLOW',      {18: Flow Change}
+     'MINI',      {19: Minimum Pressure}
+     'REQU',      {20: Required Pressure}
+     'CHEC',      {21: CHECKFREQ}
+     'MAXC',      {22: MAXCHECK}
+     'DAMP');     {23: DAMPLIMIT}
 
   EnergyWords : array[0..5] of PChar =
     ('GLOBAL',
@@ -125,7 +123,6 @@ const
   SourceWords: array[0..3] of PChar =
     ('CONCEN','MASS','SETPOINT','FLOWPACED');
 
-{*** Updated 6/24/02 ***}
   CurveWords: array[0..3] of PChar =
     ('POWER','PATTERN','HEAD','SPEED');
 
@@ -214,7 +211,7 @@ function ReadTankData: Integer;
 //----------------------------------------------------------------------
 // Parses tank/reservoir data with formats:
 //  ReservID  Elev.  (Pattern)
-//  TankID    Elev.  (InitLvl  MinLvl  MaxLvl  Diam.  MinVol.  VolCurve)
+//  TankID    Elev.  (InitLvl  MinLvl  MaxLvl  Diam.  MinVol.  VolCurve  Overflow)
 //----------------------------------------------------------------------
 var
   J    : Integer;
@@ -229,6 +226,8 @@ begin
     aNode := TNode.Create;
     aNode.X := MISSING;
     aNode.Y := MISSING;
+
+    // Check if processing a Reservoir or Tank
     if Ntoks <= 3 then
     begin
       aNode.Zindex := RESERVS;
@@ -239,9 +238,25 @@ begin
       aNode.Zindex := TANKS;
       Uutils.CopyStringArray(DefProp[TANKS].Data,aNode.Data);
     end;
+
+    // Assign tokens (indexes 1 - 7) to data items (indexes 2 - 8)
     aNode.Data[0] := Comment;
-    for J := 1 to Ntoks-1 do
+     for J := 1 to Math.min(Ntoks-1, 7) do
       aNode.Data[J+1] := TokList[J];
+
+    // Check if tank curve name is placeholder value '*'
+    if SameText(aNode.Data[TANK_VCURVE_INDEX], '*')
+    then aNode.Data[TANK_VCURVE_INDEX] := '';
+
+    // Parse overflow indicator if present
+    if (Ntoks > 8) then
+    begin
+      if SameText(TokList[8], 'Yes')
+      then aNode.Data[TANK_OVERFLOW_INDEX] := 'Yes'
+      else aNode.Data[TANK_OVERFLOW_INDEX] := 'No';
+    end;
+
+    // Add node to network
     if Ntoks <= 3 then Network.Lists[RESERVS].AddObject(ID, aNode)
     else               Network.Lists[TANKS].AddObject(ID, aNode);
     NodeList.AddObject(ID, aNode);
@@ -354,7 +369,6 @@ end;
 procedure ReadNewPumpData(aLink: TLink);
 //---------------------------------------------------------------------
 // Reads pump data with format:
-// *** Updated 6/24/02 ***
 //   PumpID  Node1  Node2  (POWER  value  PATTERN  patID  HEAD  curveID
 //                          SPEED  value)
 // where keyword-value pairs can be in any order
@@ -370,8 +384,6 @@ begin
     0:  aLink.Data[PUMP_HP_INDEX]      := TokList[i];   {Power value}
     1:  aLink.Data[PUMP_PATTERN_INDEX] := TokList[i];   {Speed pattern}
     2:  aLink.Data[PUMP_HCURVE_INDEX]  := TokList[i];   {Pump curve id}
-
-{*** Updated 6/24/02 ***}
     3:  aLink.Data[PUMP_SPEED_INDEX]   := TokList[i];   {Pump speed}
     end;
     i := i + 2;
@@ -744,7 +756,7 @@ begin
       J := Pos(':',PrevComment);
       if J > 0 then
       begin
-        I := Uutils.FindKeyword(Trim(Copy(PrevComment,2,J-1)),CurveLabel,10);   //(2.00.12 - LR)
+        I := Uutils.FindKeyword(Trim(Copy(PrevComment,2,J-1)),CurveLabel,10);
         if I >= 0 then
         begin
           aCurve.Ctype := CurveLabel[I];
@@ -1165,6 +1177,8 @@ end;
 function ReadOptionData: Integer;
 //--------------------------------------------
 // Parses line of input from [OPTIONS] section
+//
+// Modified for release 2.00.012.
 //--------------------------------------------
 var
   Index   : Integer;
@@ -1175,28 +1189,30 @@ begin
   Result := 0;
   Keyword := TokList[0];
   Index := Uutils.FindKeyWord(Keyword,OptionWords,4);
-  case Index of
+  if Ntoks >= 2 then case Index of
 
   // Flow units option
-    0: if Ntoks >= 2 then
-       begin
-         if UpperCase(TokList[1]) = 'SI' then
-           Network.Options.Data[FLOW_UNITS_INDEX] := 'LPS'
-         else
+    0: if UpperCase(TokList[1]) = 'SI' then
+         Network.Options.Data[FLOW_UNITS_INDEX] := 'LPS'
+       else
            Network.Options.Data[FLOW_UNITS_INDEX] := UpperCase(TokList[1]);
-       end;
 
-  // Headloss formula option
-    1: if Ntoks >= 2 then
-         Network.Options.Data[HLOSS_FORM_INDEX] := UpperCase(TokList[1]);
+  // Headloss formula or Head Error option
+    1: if CompareText(Keyword, 'HEADERROR') = 0
+       then Network.Options.Data[HEAD_ERROR_INDEX] := TokList[1]
+       else Network.Options.Data[HLOSS_FORM_INDEX] := UpperCase(TokList[1]);
 
   // Specific Gravity option
     2: if Ntoks >= 3 then
          Network.Options.Data[SPEC_GRAV_INDEX] := TokList[2];
 
-  // Demand Multiplier option
+  // Demand Multiplier or Demand Model option
     8: if Ntoks >= 3 then
-         Network.Options.Data[DEMAND_MULT_INDEX] := TokList[2];
+       begin
+         if CompareText(TokList[1], 'MODEL') = 0
+         then Network.Options.Data[DEMAND_MODEL_INDEX] := TokList[2]
+         else Network.Options.Data[DEMAND_MULT_INDEX] := TokList[2];
+       end;
 
   // Emitter Exponent option
     9: if Ntoks >= 3 then
@@ -1210,32 +1226,37 @@ begin
     13, //Rel. Diffusivity
     15, //Qual. Tolerance
     16: //Max Segments
-       if Ntoks >= 2 then Network.Options.Data[Index] := TokList[1];
+       Network.Options.Data[Index] := TokList[1];
 
   // Quality option
-    11: if Ntoks >= 2 then
-       begin
-         Network.Options.Data[QUAL_PARAM_INDEX] := TokList[1];
-         if Ntoks >= 3 then
-         begin
-           if CompareText(TokList[1],'TRACE') = 0 then
-             Network.Options.Data[TRACE_NODE_INDEX] := TokList[2]
-           else
-             Network.Options.Data[QUAL_UNITS_INDEX] := TokList[2];
-         end;
-       end;
+    11: begin
+          Network.Options.Data[QUAL_PARAM_INDEX] := TokList[1];
+          if Ntoks >= 3 then
+          begin
+            if CompareText(TokList[1],'TRACE') = 0
+            then Network.Options.Data[TRACE_NODE_INDEX] := TokList[2]
+            else Network.Options.Data[QUAL_UNITS_INDEX] := TokList[2];
+          end;
+        end;
 
-  // Pressure option -- not used
-   12: Result := 0;
+  // Pressure Units (not used) or Pressure Exponent option
+   12: if (Ntoks >= 3) and (CompareText(TokList[1], 'EXPONENT') = 0)
+       then Network.Options.Data[PRESSURE_EXP_INDEX] := TokList[2];
 
   // Map file option
    17: MapFile := TokList[1];
 
-{***  Added for 2.00.12  ***}
+  // Flow Change option
+   18: Network.Options.Data[FLOW_CHANGE_INDEX] := TokList[1];
+
+  // Minimum Pressure & Required Pressure options
+   19: if Ntoks >= 3 then Network.Options.Data[MIN_PRESSURE_INDEX] := TokList[2];
+   20: if Ntoks >= 3 then Network.Options.Data[REQ_PRESSURE_INDEX] := TokList[2];
+
   // CHECKFREQ, MAXCHECK & DAMPLIMIT options
-   18: Network.Options.Data[CHECK_FREQ_INDEX] := TokList[1];
-   19: Network.Options.Data[MAX_CHECK_INDEX] := TokList[1];
-   20: Network.Options.Data[DAMP_LIMIT_INDEX] := TokList[1];
+   21: Network.Options.Data[CHECK_FREQ_INDEX] := TokList[1];
+   22: Network.Options.Data[MAX_CHECK_INDEX] := TokList[1];
+   23: Network.Options.Data[DAMP_LIMIT_INDEX] := TokList[1];
 
   else
     Result := 201;
@@ -1250,10 +1271,7 @@ function ReadCoordData: Integer;
 var
   index: Integer;
   ntype: Integer;
-
-{*** Updated 11/19/01 ***}
   x,y  : Extended;
-
   aNode: TNode;
 begin
   Result := 0;
@@ -1273,16 +1291,10 @@ begin
   // If node exists then assign it X & Y coordinates
     if (aNode <> nil) then
     begin
-
-{*** Updated 11/19/01 ***}
       if not Uutils.GetExtended(TokList[1],x) then Result := 201
-
       else
       begin
-
-{*** Updated 11/19/01 ***}
         if not Uutils.GetExtended(TokList[2],y) then Result := 201
-
         else
         begin
           aNode.X := x;
@@ -1301,10 +1313,7 @@ function ReadVertexData: Integer;
 var
   Index: Integer;
   Ltype: Integer;
-
-{*** Updated 11/19/01 ***}
   x,y  : Extended;
-
   aLink: TLink;
   aVertex: PVertex;
 begin
@@ -1329,16 +1338,10 @@ begin
   // If link exists then assign it X & Y coordinates
     if (aLink <> nil) then
     begin
-
-{*** Updated 11/19/01 ***}
       if not Uutils.GetExtended(TokList[1],x) then Result := 201
-
       else
       begin
-
-{*** Updated 11/19/01 ***}
         if not Uutils.GetExtended(TokList[2],y) then Result := 201
-
         else
         begin
           new(aVertex);
@@ -1360,26 +1363,17 @@ function ReadLabelData: Integer;
 var
   ntype    : Integer;
   index    : Integer;
-
-{*** Updated 11/19/01 ***}
   x, y     : Extended;
-
   s        : String;
   aMapLabel: TMapLabel;
 begin
   if (Ntoks < 3) then Result := 201
   else
   begin
-
-{*** Updated 11/19/01 ***}
     if not Uutils.GetExtended(TokList[0],x) then Result := 201
-
     else
     begin
-
-{*** Updated 11/19/01 ***}
       if not Uutils.GetExtended(TokList[1],y) then Result := 201
-
       else
       begin
         s := TokList[2];
@@ -1944,7 +1938,7 @@ begin
     else
     begin
       Screen.Cursor := crDefault;
-      MessageDlg(MSG_NO_READ_MAP_FILE + MapFile, mtWarning, [mbOK], 0);
+      Uutils.MsgDlg(MSG_NO_READ_MAP_FILE + MapFile, mtWarning, [mbOK]);
       Result := False
     end;
     CloseFile(F);
@@ -1952,7 +1946,7 @@ begin
   else
   begin
     Screen.Cursor := crDefault;
-    MessageDlg(MSG_MAP_FILE + MapFile + MSG_NOT_EXIST, mtWarning, [mbOK], 0);
+    Uutils.MsgDlg(MSG_MAP_FILE + MapFile + MSG_NOT_EXIST, mtWarning, [mbOK]);
     Result := False;
   end;
 end;
@@ -2090,8 +2084,8 @@ begin
   CloseFile(F);
   Uinput.UpdateEditor(EditorObject,EditorIndex);
   MainForm.RefreshMapForm;
-  if not R then MessageDlg(
-   Fname + MSG_INVALID_FILE, mtError, [mbOK], 0)
+  if not R then Uutils.MsgDlg(
+   Fname + MSG_INVALID_FILE, mtError, [mbOK])
   else HasChanged := True;
 end;
 

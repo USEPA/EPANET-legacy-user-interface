@@ -3,8 +3,8 @@ unit Dcontrol;
 {-------------------------------------------------------------------}
 {                    Unit:    Dcontrol.pas                          }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a memo control that edits either Simple or       }
@@ -15,7 +15,8 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, Uglobals, ComCtrls;
+  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, ComCtrls, System.UITypes,
+  Uglobals;
 
 type
   TControlsForm = class(TForm)
@@ -55,7 +56,7 @@ end;
 
 procedure TControlsForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(HelpContext);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, HelpContext);
 end;
 
 end.

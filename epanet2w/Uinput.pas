@@ -3,11 +3,8 @@ unit Uinput;
 {-------------------------------------------------------------------}
 {                    Unit:    Uinput.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    6/1/00                                }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             2/14/08     (2.00.12)                 }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that provides interface routines to          }
@@ -91,7 +88,8 @@ unit Uinput;
 interface
 
 uses Controls, Classes, SysUtils, Dialogs, Windows, Math,
-     Forms, Graphics, Uglobals, Uutils, Fproped;
+     Forms, Graphics, System.UITypes,
+     Uglobals, Uutils, Fproped;
 
 const
   FMT_NODE_EXISTS = 'Node %s already exists.';
@@ -484,7 +482,6 @@ procedure EditNode(const Ntype: Integer; const Index: Integer);
 var
   i    : Integer;
   v    : Integer;
-  last : Integer;
   aNode: TNode;
 begin
 //Set caption for Property Editor window
@@ -503,12 +500,18 @@ begin
     if aNode.Y = MISSING then PropList.Add('')
     else PropList.Add(Format('%f',[aNode.Y]));
     case Ntype of
-      JUNCS:   last := JUNC_SRCQUAL_INDEX;
-      RESERVS: last := RES_SRCQUAL_INDEX;
-      TANKS:   last := TANK_SRCQUAL_INDEX;
-      else     last := -1;
+      JUNCS:
+        for i := 0 to JUNC_SRCQUAL_INDEX do PropList.Add(aNode.Data[i]);
+      RESERVS:
+        for i := 0 to RES_SRCQUAL_INDEX do PropList.Add(aNode.Data[i]);
+      TANKS:
+        begin
+          for i := 0 to TANK_VCURVE_INDEX do PropList.Add(aNode.Data[i]);
+          PropList.Add(aNode.Data[TANK_OVERFLOW_INDEX]);
+          for i := TANK_MIXMODEL_INDEX to TANK_SRCQUAL_INDEX do
+            PropList.Add(aNode.Data[i]);
+        end;
     end;
-    for i := 0 to last do PropList.Add(aNode.Data[i]);
 
   // Add output values to PropList
     for v := DEMAND to NODEQUAL do
@@ -529,7 +532,7 @@ procedure EditDemands(const Index: Integer);
 // Invokes Demand Editor form to edit junction's demands
 //-------------------------------------------------------
 begin
-  with TDemandsForm.Create(Application) do
+  with TDemandsForm.Create(PropEditForm) do
   try
     Caption := TXT_DEMAND_EDITOR + GetID(JUNCS,Index);
     LoadDemands;
@@ -636,10 +639,10 @@ begin
     with Options do
     begin
       case Index of
-
-{***  Modified for 2.00.12  ***}
       0:  begin
             for k := FLOW_UNITS_INDEX to STATUS_RPT_INDEX do //Hydraulics
+              PropList.Add(Data[k]);
+            for k := HEAD_ERROR_INDEX to PRESSURE_EXP_INDEX do
               PropList.Add(Data[k]);
             for k := CHECK_FREQ_INDEX to DAMP_LIMIT_INDEX do
               PropList.Add(Data[k]);
@@ -1117,8 +1120,8 @@ begin
   end;
   UpdateEditor(EditorObject, EditorIndex);
   if Count > 0 then MainForm.SetChangeFlags;
-  MessageDlg(IntToStr(count) + ' ' + ObjectLabel[ObjType] +
-    TXT_WERE_UPDATED,mtInformation,[mbOK],0);
+  Uutils.MsgDlg(IntToStr(count) + ' ' + ObjectLabel[ObjType] +
+    TXT_WERE_UPDATED,mtInformation,[mbOK]);
 end;
 
 
@@ -1134,7 +1137,7 @@ var
   p1      : TPoint;
 begin
 // Confirm deletion
- if MessageDlg(MSG_CONFIRM_DELETE, mtConfirmation,[mbYes,mbNo],0) = mrNo
+ if Uutils.MsgDlg(MSG_CONFIRM_DELETE, mtConfirmation,[mbYes,mbNo]) = mrNo
    then Exit;
 
 //Create a GDI region from user's fenceline region
@@ -1298,16 +1301,20 @@ begin
   9:                                       {Diam}
      Result := Uutils.GetSingle(S,v);
   10,                                      {MinVol}
-  13,                                      {MixFrac}
-  14,                                      {Kbulk}
-  15:                                      {InitQual}
+  14,                                      {MixFrac}
+  15,                                      {Kbulk}
+  16:                                      {InitQual}
      if (Length(Trim(S)) > 0) then
        Result := Uutils.GetSingle(S,v);
   end;
   if Result then
   begin
     MainForm.SetChangeFlags;
-    k := I - PROP_INDEX_OFFSET;
+    k := -1;                               //ID, X, Y
+    if (I >= 3) and (I <= 11)
+      then k := I - 3                      //Elev - VolCurve
+    else if I = 12 then k := 16            //Overflow
+    else if I >= 13 then k := I - 4;       //MixModel - SrcQual
     if k >= 0 then
     begin
       Node(TANKS,EditorIndex).Data[k] := S;
@@ -1483,13 +1490,12 @@ var
   k: Integer;
 begin
   Result := True;
-  k := I;                           
+  k := I;
+  // Convert from editor index I to property index k
   case EditorIndex of
-
-{***  Modified for 2.00.12  ***}
-    0: if I <= STATUS_RPT_INDEX     //HYDRAULICS
-       then k := I
-       else k := I - STATUS_RPT_INDEX - 1 + CHECK_FREQ_INDEX;
+    0: if I < 11 then k := I       //HYDRAULICS
+       else if I < 17 then k := HEAD_ERROR_INDEX + (I - 11)
+       else k := CHECK_FREQ_INDEX + (I - 17);
 
     1: k := QUAL_PARAM_INDEX  + I;  //QUALITY
     2: k := BULK_ORDER_INDEX + I;   //REACTIONS
@@ -2229,8 +2235,8 @@ begin
 // If ID exists then restore current ID & exit.
   if Network.Lists[CurrentList].IndexOf(S) >= 0 then
   begin
-    MessageDlg(MSG_ALREADY_HAVE + ObjectLabel[CurrentList] +
-      TXT_NAMED + S, mtError, [mbOK], 0);
+    Uutils.MsgDlg(MSG_ALREADY_HAVE + ObjectLabel[CurrentList] +
+      TXT_NAMED + S, mtError, [mbOK]);
     Network.Lists[CurrentList].Strings[i] := s1;
     Result := True;
     Exit;

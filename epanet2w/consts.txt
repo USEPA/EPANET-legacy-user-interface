@@ -1,10 +1,8 @@
 {-------------------------------------------------------------------}
 {                    Unit:    Consts.txt                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    4/28/00                               }
-{                             3/1/01                                }
-{                             2/14/08     (2.00.12)                 }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {  Constants used with EPANET2W and imported into Uglobals.pas.     }
@@ -14,8 +12,8 @@ const
 
 // File names
   INIFILE = 'epanet2.ini';
-  HLPFILE = 'epanet2.hlp';
-  TUTORFILE = 'tutorial.hlp';
+  HLPFILE = 'epanet2.chm';
+  TUTORFILE = 'tutorial.chm';
 
 // Labels for network objects
   ObjectLabel: array[JUNCS..OPTS] of PChar =
@@ -37,7 +35,6 @@ const
 // Water Quality parameters
   QualParams: array[0..3] of PChar = ('None', 'Chemical', 'Trace', 'Age');
 
-{*** Updated 3/1/01 ***}
 //WQ source types
   SourceType: array[0..3] of PChar =
     ('CONCEN','MASS','SETPOINT','FLOWPACED');
@@ -109,7 +106,7 @@ const
     (Name:'Pressure';        Style:esReadOnly;Mask:emNone),
     (Name:'Quality';         Style:esReadOnly;Mask:emNone));
 
-  TankProps:  array [0..20] of TPropRecord =
+  TankProps:  array [0..21] of TPropRecord =
    ((Name:'*Tank ID';       Style:esEdit;    Mask:emNoSpace;  Length:MAXID),
     (Name:'X-Coordinate';   Style:esEdit;    Mask:emNumber),
     (Name:'Y-Coordinate';   Style:esEdit;    Mask:emNumber),
@@ -122,6 +119,8 @@ const
     (Name:'*Diameter';      Style:esEdit;    Mask:emPosNumber),
     (Name:'Minimum Volume'; Style:esEdit;    Mask:emPosNumber),
     (Name:'Volume Curve';   Style:esEdit;    Mask:emNoSpace;  Length:MAXID),
+    (Name:'Can Overflow';   Style:esComboList; Mask:emNone;   Length:0;
+     List:'No'#13'Yes'),
     (Name:'Mixing Model';   Style:esComboList; Mask:emNone;   Length:0;
      List:'Mixed'#13'2Comp'#13'FIFO'#13'LIFO'),
     (Name:'Mixing Fraction';Style:esEdit;    Mask:emPosNumber),
@@ -204,9 +203,7 @@ const
     (Name:'Meter ID';       Style:esEdit;      Mask:emNoSpace;  Length:MAXID),
     (Name:'Font';           Style:esButton;    Mask:emNone));
 
-
-{*** Updated for 2.00.12 ***}
-  HydraulicProps: array [0..13] of TPropRecord =
+  HydraulicProps: array [0..19] of TPropRecord =
     ((Name:'Flow Units';         Style:esComboList;  Mask:emNone; Length:0;
       List:'CFS'#13'GPM'#13'MGD'#13'IMGD'#13'AFD'#13 +
            'LPS'#13'LPM'#13'MLD'#13'CMH'#13'CMD'),
@@ -224,7 +221,12 @@ const
      (Name:'Status Report';      Style:esComboList; Mask:emNone;  Length:0;
       List:'No'#13'Yes'#13'Full'),
 
-{***  Added for 2.00.12 ***}
+     (Name:'Max. Head Error';    Style:esEdit; Mask:emPosNumber),
+     (Name:'Max. Flow Change';   Style:esEdit; Mask:emPosNumber),
+     (Name:'Demand Model';       Style:esComboList; Length:0; List:'DDA'#13'PDA'),
+     (Name:'Minimum Pressure';   Style:esEdit; Mask:emPosNumber),
+     (Name:'Required Pressure';  Style:esEdit; Mask:emPosNumber),
+     (Name:'Pressure Exponent';  Style:esEdit; Mask:emPosNumber),
      (Name:'CHECKFREQ';          Style:esEdit; Mask:emPosNumber),
      (Name:'MAXCHECK';           Style:esEdit; Mask:emPosNumber),
      (Name:'DAMPLIMIT';          Style:esEdit; Mask:emPosNumber));
@@ -289,7 +291,7 @@ const
                      '',        //6 - Source Pattern
                      'CONCEN'); //7 - Source Type
 
-  DefTank:   array [0..15] of String =              //Index in TankProps:
+  DefTank:   array [0..16] of String =              //Index in TankProps:
                    ('',        //0 - Comment              (3)
                     '',        //1 - Tag                  (4)
                     '0',       //2 - Elevation            (5)
@@ -305,7 +307,8 @@ const
                     '',        //12 - Initial Quality     (15)
                     '',        //13 - Source Quality      (16)
                     '',        //14 - Source Pattern
-                    'CONCEN'); //15 - Source Type
+                    'CONCEN',  //15 - Source Type
+                    'No');     //16 - Can Overflow
 
   DefPipe:   array [0..8] of String =               //Index in PipeProps:
                    ('',        //0 - Comment              (3)
@@ -345,7 +348,7 @@ const
                      '1',           {2-Specific grav.}
                      '1',           {3-Rel. Viscosity}
                      '40',          {4-Max. trials}
-                     '0.001',       {5-Accuracy}              //<<<<<<<<
+                     '0.001',       {5-Accuracy}
                      'Continue',    {6-Unbalanced}
                      '1',           {7-Global Pattern}
                      '1.0',         {8-Demand Multiplier}
@@ -356,7 +359,7 @@ const
                      'mg/L',        {12-Quality units}
                      '1',           {13-Rel. Diffusivity}
                      '',            {14-Trace node}
-                     '0.01',        {15-Quality tolerance}   //<<<<<<<<<<<
+                     '0.01',        {15-Quality tolerance}
                      '',            {16-Max. Segments (not used)}
 
                      '1',           {17-Bulk react. order}
@@ -381,10 +384,16 @@ const
                      '',            {34-Price pattern}
                      '0',           {35-Demand charge}
 
-{*** Added for 2.00.12 ***}
                      '2',           {36-CHECKFREQ}
                      '10',          {37-MAXCHECK}
-                     '0');          {38-DAMPLIMIT}
+                     '0',           {38-DAMPLIMIT}
+
+                     '0',           {39-Max Head Error}
+                     '0',           {40-Max Flow Change}
+                     'DDA',         {41-Demand Model}
+                     '0',           {42-Minimum Pressure}
+                     '0',           {43-Required Pressure}
+                     '0.5');        {44-Pressure Exponent}
 
 //Node reporting variables
 //  Name         = name of variable
@@ -482,7 +491,7 @@ const
       SourceIndex:(2,2,2);
       DefIntervals:(0.01,0.1,1.0,2.0)),
 
-     (Name:'Unit Headloss';               {*** Updated 3/1/01 ***}
+     (Name:'Unit Headloss';
       Source:vsOutput;
       SourceIndex:(3,3,3);
       DefIntervals:(0.025,0.05,0.075,0.1)),
@@ -534,6 +543,4 @@ const
       SourceIndex:(-1,-1,-1);
       DefIntervals:(2,6,12,24))
     );
-
-
 

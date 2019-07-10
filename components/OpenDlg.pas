@@ -16,6 +16,7 @@
    Author:  L. Rossman
    Date:    3/30/00
             9/5/05
+            4/18/14
 }
 
 unit OpenDlg;
@@ -71,12 +72,13 @@ uses Consts, CommDlg, Forms, Dlgs;
 { TOpenTxtFileDialog }
 
 //{$R EXTDLGS.RES}
+{$R 'OpenDlg.dcr'}
 
 constructor TOpenTxtFileDialog.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   //Filter := GraphicFilter(TGraphic);
-  Options := Options - [ofEnableSizing];
+  //Options := Options - [ofEnableSizing];                                     //(4/18/14)
   FShowPreview := True;
   FWordWrap := False;
   FOnPreview := nil;
@@ -85,7 +87,8 @@ begin
   begin
     Name := 'PreviewPanel';
     Caption := '';
-    SetBounds(204, 5, 169, 200);
+    //SetBounds(204, 5, 169, 200);                                             //(4/18/14)
+    Align := alRight;                                                          //(4/18/14)
     BevelOuter := bvNone;
     BorderWidth := 6;
     TabOrder := 1;
@@ -93,7 +96,7 @@ begin
     with FTextFileLabel do
     begin
       Name := 'TextFileLabel';
-      Caption := 'Contents';
+      Caption := 'Preview';                                                    //(4/18/14)
       SetBounds(6, 6, 157, 23);
       Align := alTop;
       AutoSize := False;
@@ -120,8 +123,8 @@ begin
         //Color := clWindow;
         Align := alClient;
         AutoSize := False;
-        Font.Name := 'Small Fonts';
-        Font.Size := 7;
+        Font.Name := 'Courier New';                                            //(4/18/14)
+        Font.Size := 8;                                                        //(4/18/14)
         WordWrap := FWordWrap;
         Parent := FTextPanel;
         ParentColor := True;
@@ -242,7 +245,7 @@ begin
   inherited DoShow;
 end;
 
-function TOpenTxtFileDialog.Execute;
+function TOpenTxtFileDialog.Execute : Boolean;
 begin
   if FShowPreview and NewStyleControls and not (ofOldStyleDialog in Options) then
     Template := 'DLGTEMPLATE' else

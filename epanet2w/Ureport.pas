@@ -3,9 +3,8 @@ unit Ureport;
 {-------------------------------------------------------------------}
 {                    Unit:    Ureport.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit that writes full report to text file.        }
@@ -13,7 +12,9 @@ unit Ureport;
 
 interface
 
-uses Forms, Controls, Messages, SysUtils, Dialogs, Uutils, Uglobals;
+uses
+  Forms, Controls, Messages, SysUtils, Dialogs, System.UITypes,
+  Uutils, Uglobals;
 
 procedure CreateFullReport;
 
@@ -27,7 +28,7 @@ const
    '*                             E P A N E T                            *',
    '*                     Hydraulic and Water Quality                    *',
    '*                     Analysis for Pipe Networks                     *',
-   '*                           Version 2.0                              *',
+   '*                           Version 2.2                              *',
    '**********************************************************************');
   FORMFEED = #12;
   PAGESIZE = 55;
@@ -394,8 +395,8 @@ begin
 // Check for huge file size
   Size := (Nlinks + (Nnodes + Nlinks)*Nperiods)*60*1e-6;
   if Size > 10 then
-    if MessageDlg(MSG_REPORT_SIZE1 + IntToStr(Trunc(Size)) +
-      MSG_REPORT_SIZE2, mtConfirmation, [mbYes,mbNo], 0) = mrNo
+    if Uutils.MsgDlg(MSG_REPORT_SIZE1 + IntToStr(Trunc(Size)) +
+      MSG_REPORT_SIZE2, mtConfirmation, [mbYes,mbNo], MainForm) = mrNo
         then Exit;
 
 // Get a report file name
@@ -417,8 +418,8 @@ begin
       R := WriteReport(Filename);
       Screen.Cursor := crDefault;
       if not R then
-        MessageDlg(MSG_NO_WRITE + ExtractFileName(Filename),
-          mtError, [mbOK], 0);
+        Uutils.MsgDlg(MSG_NO_WRITE + ExtractFileName(Filename),
+          mtError, [mbOK], MainForm);
     end;
   end;
 end;

@@ -3,16 +3,8 @@ unit Dabout;
 {-------------------------------------------------------------------}
 {                    Unit:    Dabout.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/31/00                               }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             1/5/01                                }
-{                             3/1/01                                }
-{                             11/19/01                              }
-{                             12/8/01                               }
-{                             6/24/02                               }
-{                             11/14/07                              }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit containing the "About" dialog box for EPANET2W.       }
@@ -53,7 +45,7 @@ implementation
 
 procedure TAboutBoxForm.FormCreate(Sender: TObject);
 begin
-   //Build.Caption := 'Build 2.00.12';
+   //Build.Caption := 'Build 2.2.01';
 end;
 
 end.

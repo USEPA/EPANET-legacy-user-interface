@@ -3,13 +3,8 @@ unit Uutils;
 {-------------------------------------------------------------------}
 {                    Unit:    Uutils.pas                            }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
-{                             9/7/00                                }
-{                             12/29/00                              }
-{                             11/19/01                              }
-{                             7/3/07                                }
-{                             2/14/08   (2.00.12)                   }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Delphi Pascal unit containing general purpose utility           }
@@ -18,8 +13,8 @@ unit Uutils;
 
 interface
 
-uses SysUtils, Graphics, Windows, Math, Classes,
-     Consts, Dialogs, Chart;
+uses SysUtils, Graphics, Windows, Math, Classes, Forms,
+     Consts, Dialogs, System.UITypes, VCLTee.Chart;
 
 const
   MAXSIZE     = 536870910; { = largest Integer / SizeOf(Integer) - 1 }
@@ -41,17 +36,12 @@ type
   EInvalidDest = class(EStreamError);
   EFCantMove = class(EStreamError);
 
-{*** Updated 12/29/00 ***}
-//procedure AdjustAspectRatio(const Aratio: Single; var Width: Single;
-//            var Height: Single);
-procedure AutoScale(var Zmin: Single; var Zmax: Single; var T: Single);
+procedure AutoScale(var Zmin: Double; var Zmax: Double; var T: Double);
+
 procedure ChartToPicture(aChart: TChart; aPicture: TPicture);
 procedure Cls(Canvas: TCanvas; aRect: TRect; aColor: TColor);
 function  CompareSingles(a, b: Pointer): Integer;
 function  CompareStrVals(const S1,S2: String; const R: TRelationType): Boolean;
-
-{*** Procedure removed (7/3/07) ***}
-//procedure CopyFile(const FileName, DestName: string);
 
 procedure CopyStringArray(const Source: array of String;
                           var Dest: array of String);
@@ -63,9 +53,7 @@ function  FindKeyWord(const S: String; const Words: array of PChar;
 procedure FitChartToPage(aChart: TChart; const PageWidth, PageHeight: Single;
             var ChartWidth, ChartHeight: Single);
 
-{*** New function added (7/3/07) ***}
 function  GetAppDataDir(const AppName: String; const AppDir: String): String;
-
 function  GetDecimalChar:Char;
 function  GetExtended(const S: String; var X: Extended): Boolean;
 function  GetFileSize(const FileName: string): LongInt;
@@ -82,8 +70,10 @@ function  InvertColor(C: TColor): TColor;
 function  IsValidNumber(const Txt: String; var V: Single): Boolean;
 procedure LatLongToMeters(var X, Y: Extended);
 
-{*** Procedure removed (7/3/07). ***}
-//procedure MoveFile(const FileName, DestName: string);
+function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
+          Buttons: TMsgDlgButtons): Integer; overload;
+function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
+          Buttons: TMsgDlgButtons; F: TForm): Integer; overload;
 
 function  PtOnLine(const P1: TPoint; const P2: TPoint;
                    const P: TPoint; const Ptol: Integer): Boolean;
@@ -96,7 +86,8 @@ function  WinExecAndWait(CmdLine: String; ShowCmd: Integer): Integer;
 
 implementation
 
-uses Forms, ShellAPI;
+uses
+  ShellAPI;
 
 const
   SInvalidDest = 'Destination %s does not exist';
@@ -104,14 +95,14 @@ const
   SInvalidNum = ' is not a valid number.';
 
 
-procedure AutoScale(var Zmin: Single; var Zmax: Single; var T: Single);
-{---------------------------------------------------------------------}
-{  Scales range between Zmin and Zmax at intervals of T.              }
-{---------------------------------------------------------------------}
+procedure AutoScale(var Zmin: Double; var Zmax: Double; var T: Double);
+//-----------------------------------------------------------------------------
+//  Scales the range between Zmin and Zmax at intervals of T.
+//-----------------------------------------------------------------------------
 var
   m        : Integer;
   z        : Longint;
-  d, z1, z2: Single;
+  d, z1, z2: Double;
 begin
   z1 := Zmin;
   z2 := Zmax;
@@ -132,10 +123,12 @@ begin
     d := Abs(Zmax - Zmin);
     m := Trunc(Ln(d)/Ln(10.0));
     T := IntPower(10.,m);
-    if T > 0.2*d then T := 0.5*T;
+    if T > 0.5*d then T := 0.2*T
+    else if T > 0.2*d then T := 0.5*T;
     z := Trunc(Zmax/T) + 1;
     Zmax := z*T;
     z := Trunc(Zmin/T);
+    if Zmin < 0 then z := z - 1;
     Zmin := z*T;
     if Zmin = Zmax then Zmax := Zmin + T;
     if Abs(Zmin-Zmax)/T > 10.0 then T := 2.0*T;
@@ -148,9 +141,9 @@ end;
 
 
 procedure ChartToPicture(aChart: TChart; aPicture: TPicture);
-{-----------------------------------------------------------}
-{  Converts a TeeChart chart object into a TPicture object. }
-{-----------------------------------------------------------}
+//-----------------------------------------------------------
+//  Converts a TeeChart chart object into a TPicture object.
+//-----------------------------------------------------------
 var
   mf: TMetafile;
   mfCanvas: TMetafileCanvas;
@@ -281,7 +274,7 @@ end;
 
 function FileDateTime(const FileName: string): System.TDateTime;
 begin
-  Result := FileDateToDateTime(FileAge(FileName));
+  FileAge(FileName, Result);
 end;
 
 
@@ -300,7 +293,7 @@ begin
   for k := 0 to High(Words) do
   begin
     s1 := Copy(Words[k], 1, N);
-    if Pos(s1, s2) = 1 then                                                     //(2.00.12 - LR)
+    if Pos(s1, s2) = 1 then
     begin
       Result := k;
       Exit;
@@ -319,6 +312,7 @@ procedure FitChartToPage(aChart: TChart; const PageWidth, PageHeight: Single;
 {  are returned as the width and height of the chart on the  }
 {  printed page.                                             }
 {------------------------------------------------------------}
+
 var
   aratio,h,w: Single;
 begin
@@ -343,7 +337,6 @@ begin
 end;
 
 
-{***  New function added (7/3/07) ***}
 function  GetAppDataDir(const AppName: String; const AppDir: String): String;
 //-----------------------------------------------------------------------------
 //  Returns a directory in a user's space where data files for
@@ -566,7 +559,7 @@ function IsValidNumber(const Txt: String; var V: Single): Boolean;
 begin
     if not GetSingle(Txt,V) then
     begin
-      MessageDlg('''' + Txt + '''' + SInvalidNum, mtError,[mbOK],0);
+      MsgDlg('''' + Txt + '''' + SInvalidNum, mtError,[mbOK]);
       Result := False;
     end
     else Result := True;
@@ -583,6 +576,42 @@ procedure LatLongToMeters(var X, Y: Extended);
 begin
   X := 111194.87*X;
   Y := 111194.87*Y*cos(DegToRad(Y));
+end;
+
+
+function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
+          Buttons: TMsgDlgButtons): Integer; overload;
+//-----------------------------------------------------------------------------
+//  Displays a message dialog in center of currently active form.
+//-----------------------------------------------------------------------------
+begin
+  Result :=  MsgDlg(Msg, DlgType, Buttons, Screen.ActiveForm);
+end;
+
+
+function  MsgDlg(const Msg: string; DlgType: TMsgDlgType;
+          Buttons: TMsgDlgButtons; F: TForm): Integer; overload;
+//-----------------------------------------------------------------------------
+//  Displays a message dialog in center of a specific form.
+//-----------------------------------------------------------------------------
+var
+  R: TRect;
+begin
+  if not Assigned(F) then
+  begin
+    Result := MessageDlg(Msg, DlgType, Buttons, 0);
+  end else
+  begin
+    with CreateMessageDialog(Msg, DlgType, Buttons) do
+    try
+      GetWindowRect(F.Handle, R);
+      Left := R.Left + ((R.Right - R.Left) div 2) - (Width div 2);
+      Top := R.Top + ((R.Bottom - R.Top) div 2) - (Height div 2);
+      Result := ShowModal;
+    finally
+      Free;
+    end;
+  end;
 end;
 
 
@@ -724,7 +753,8 @@ procedure Tokenize(S: String; T: TStringList; var N: Integer);
 {----------------------------------------------------}
 const
 // Spaces, tabs, commas, & line feeds separate tokens
-  separators: set of Char = [' ',Chr(9),',',Chr(10),Chr(13)];
+//  separators: set of Char = [' ',Chr(9),',',Chr(10),Chr(13)];
+  separators: TSysCharSet = [' ',Chr(9),',',Chr(10),Chr(13)];
 var
   instring:  Boolean;   {True if currently in a string}
   intoken:   Boolean;   {True if currently in a token}
@@ -748,7 +778,8 @@ begin
     c := S[i];
     if c = ';' then break;     {Comment follows}
 
-    if  (c in separators)
+//    if  (c in separators)
+    if CharInSet(c, separators)
     and (not instring) then    {Separator found}
     begin
       if intoken then          {Finish current token}
@@ -759,7 +790,6 @@ begin
       end;
     end
 
-{*** Updated 11/19/01 ***}
     else if (c = Chr(34))      {Quote found}
     and not intoken then
     begin
@@ -769,7 +799,7 @@ begin
         instring := False;
         Inc(N);
       end
-{************************}
+
       else                     {Start new string}
       begin
         instring := True;

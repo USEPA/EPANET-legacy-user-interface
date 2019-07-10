@@ -3,8 +3,8 @@ unit Dmapdim;
 {-------------------------------------------------------------------}
 {                    Unit:    Dmapdim.pas                           }
 {                    Project: EPANET2W                              }
-{                    Version: 2.0                                   }
-{                    Date:    5/29/00                               }
+{                    Version: 2.2                                   }
+{                    Date:    6/24/19                               }
 {                    Author:  L. Rossman                            }
 {                                                                   }
 {   Form unit with a dialog box sets dimensions of the Network Map. }
@@ -14,7 +14,7 @@ interface
 
 uses
   SysUtils, WinTypes, WinProcs, Messages, Classes, Graphics, Controls,
-  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls,
+  Forms, Dialogs, StdCtrls, Buttons, ExtCtrls, System.UITypes,
   Uglobals, Uutils, NumEdit;
 
 const
@@ -127,7 +127,7 @@ begin
   Uutils.GetSingle(URYEdit.Text,y2);
   if (x1 = x2) or (y1 = y2) then
   begin
-    MessageDlg(MSG_ILLEGAL_MAP_LIMITS,mtWarning,[mbOK],0);
+    Uutils.MsgDlg(MSG_ILLEGAL_MAP_LIMITS,mtError,[mbOK]);
     LLXEdit.SetFocus;
   end
   else ModalResult := mrOK;
@@ -148,7 +148,7 @@ end;
 
 procedure TMapDimensionsForm.BtnHelpClick(Sender: TObject);
 begin
-  Application.HelpContext(288);
+  HtmlHelp(GetDesktopWindow, Application.HelpFile, HH_HELP_CONTEXT, 288);
 end;
 
 end.
