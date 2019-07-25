@@ -392,7 +392,7 @@ const
                      '0',           {40-Max Flow Change}
                      'DDA',         {41-Demand Model}
                      '0',           {42-Minimum Pressure}
-                     '0',           {43-Required Pressure}
+                     '0.1',         {43-Required Pressure}
                      '0.5');        {44-Pressure Exponent}
 
 //Node reporting variables

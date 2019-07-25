@@ -141,6 +141,8 @@ type
     procedure PopupVerticesClick(Sender: TObject);
     procedure PopupQuitEditingClick(Sender: TObject);
     procedure Timer2Timer(Sender: TObject);
+    procedure FormMouseWheel(Sender: TObject; Shift: TShiftState;
+      WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 
   private
     { Private declarations }
@@ -915,6 +917,26 @@ begin
     ZOOMOUT:       GoZoomOut(X,Y);
     end;
   end;
+end;
+
+
+procedure TMapForm.FormMouseWheel(Sender: TObject; Shift: TShiftState;
+  WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+//-----------------------------------------------------
+// OnMouseWheel event handler.
+// Implements Zoom In/Out on the map.
+//-----------------------------------------------------
+var
+  Pos: TPoint;
+begin
+  Pos := ScreenToClient(MousePos);
+  if WheelDelta > 0 then
+  begin
+    BeginZooming(Pos.X, Pos.Y);
+    GoZoomIn(Pos.X, Pos.Y);
+  end
+  else GoZoomOut(Pos.X, Pos.Y);
+  Handled := true;
 end;
 
 
